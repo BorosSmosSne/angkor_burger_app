@@ -1,3 +1,5 @@
+import 'package:angkor_burger_app/screens/login_screen.dart';
+import 'package:angkor_burger_app/screens/sign_up_screen.dart';
 import 'package:angkor_burger_app/widgets/animated_button.dart';
 import 'package:flutter/material.dart';
 
@@ -35,19 +37,17 @@ class WelcomeScreen extends StatelessWidget {
                   children: [
                     SizedBox(height: 100),
                     Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 22),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 28,
-                      ),
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(28),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 20,
-                            offset: const Offset(0, 6),
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
@@ -73,10 +73,14 @@ class WelcomeScreen extends StatelessWidget {
                             ),
                           ),
                           SizedBox(height: 24),
-                          Image.asset(
-                            'assets/images/logo_angkorBurger.png',
-                            height: 250,
-                            width: 250,
+                          Hero(
+                            tag: 'app_logo',
+                            child: Image.asset(
+                              'assets/images/logo_angkorBurger.png',
+                              height: 250,
+                              width: 250,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                           SizedBox(height: 24),
                           Text(
@@ -102,19 +106,33 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 40),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 22),
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
                       child: AnimatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignUpScreen(),
+                            ),
+                          );
+                        },
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignUpScreen(),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _brandRed,
-                            minimumSize: Size(double.infinity, 56),
+                            minimumSize: const Size(double.infinity, 56),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Sign Up',
                             style: TextStyle(
                               color: Colors.white,
@@ -125,16 +143,30 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 22),
+                      padding: const EdgeInsets.symmetric(horizontal: 22),
                       child: AnimatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );
+                        },
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
-                            minimumSize: Size(double.infinity, 56),
+                            minimumSize: const Size(double.infinity, 56),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
