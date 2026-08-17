@@ -2,16 +2,16 @@ import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/widgets/animated_button.dart';
 import 'package:flutter/material.dart';
 
-class SignUpScreen extends StatefulWidget {
+class AuthScreen extends StatefulWidget {
   final bool initialIsSignUp;
 
-  const SignUpScreen({super.key, this.initialIsSignUp = true});
+  const AuthScreen({super.key, this.initialIsSignUp = true});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen>
+class _AuthScreenState extends State<AuthScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;

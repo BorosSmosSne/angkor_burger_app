@@ -1,5 +1,4 @@
-import 'package:angkor_burger_app/screens/login_screen.dart';
-import 'package:angkor_burger_app/screens/sign_up_screen.dart';
+import 'package:angkor_burger_app/screens/auth_screen.dart';
 import 'package:angkor_burger_app/widgets/animated_button.dart';
 import 'package:flutter/material.dart';
 
@@ -29,65 +28,72 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          SafeArea(
+          Positioned(
+            top: 320,
+            left: 0,
+            right: 0,
             child: Center(
-              child: SingleChildScrollView(
+              child: Hero(
+                tag: 'app_logo',
+                child: Image.asset(
+                  'assets/images/logo_angkorBurger.png',
+                  width: 320,
+                  height: 250,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 400,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _brandYellow,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.storefront_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 460,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(height: 100),
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.symmetric(horizontal: 24),
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'WELCOME',
-                            style: TextStyle(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w900,
-                              color: _brandYellow,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Login or Sign Up to Continue...',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          SizedBox(height: 24),
-                          Hero(
-                            tag: 'app_logo',
-                            child: Image.asset(
-                              'assets/images/logo_angkorBurger.png',
-                              height: 250,
-                              width: 250,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                          SizedBox(height: 24),
-                          Text(
-                            'ANGKOR BURGER',
+                            'Taste the Kingdom',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 24,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.bold,
                               color: _brandRed,
                             ),
                           ),
@@ -112,7 +118,7 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
+                              builder: (context) => const AuthScreen(initialIsSignUp: true),
                             ),
                           );
                         },
@@ -121,7 +127,7 @@ class WelcomeScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SignUpScreen(),
+                                builder: (context) => const AuthScreen(initialIsSignUp: true),
                               ),
                             );
                           },
@@ -151,7 +157,8 @@ class WelcomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
+                              builder: (context) =>
+                                  const AuthScreen(initialIsSignUp: false),
                             ),
                           );
                         },
@@ -160,7 +167,8 @@ class WelcomeScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) =>
+                                    const AuthScreen(initialIsSignUp: false),
                               ),
                             );
                           },
