@@ -1,5 +1,5 @@
 import 'package:angkor_burger_app/screens/home_screen.dart';
-import 'package:angkor_burger_app/widgets/animated_button.dart';
+import 'package:angkor_burger_app/helpers/animated_button.dart';
 import 'package:flutter/material.dart';
 
 class AuthScreen extends StatefulWidget {

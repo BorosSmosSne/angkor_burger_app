@@ -24,22 +24,13 @@ class _AnimatedButtonState extends State<AnimatedButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) {
-        if (widget.onPressed != null) {
-          setState(() => _isPressed = true);
-        }
-      },
-      onPointerUp: (_) {
-        if (widget.onPressed != null) {
-          setState(() => _isPressed = false);
-        }
-      },
-      onPointerCancel: (_) {
-        if (widget.onPressed != null) {
-          setState(() => _isPressed = false);
-        }
-      },
+    if (widget.onPressed == null) return widget.child;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onPressed,
       child: AnimatedScale(
         scale: _isPressed ? widget.scaleFactor : 1.0,
         duration: widget.duration,
@@ -49,3 +40,4 @@ class _AnimatedButtonState extends State<AnimatedButton> {
     );
   }
 }
+

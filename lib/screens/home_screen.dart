@@ -1,6 +1,6 @@
+import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
-import 'package:angkor_burger_app/widgets/category_pill.dart';
-import 'package:angkor_burger_app/widgets/product_card.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +13,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Color _brandRed = const Color(0xFF8B1D1D);
-  final Color _brandColor = const Color(0xFFFCF5F0);
-
   // List of Banner Images for Carousel Slider
   final List<String> _bannerImages = [
     'assets/images/imagelist1.jpg',
@@ -24,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   int _currentBannerIndex = 0;
+  final Set<String> _favoriteProductNames = {};
 
   final List<ProductModel> _sampleProducts = [
     ProductModel(
@@ -31,27 +29,111 @@ class _HomeScreenState extends State<HomeScreen> {
       price: 5.99,
       rating: 4.8,
       imagePath: 'assets/images/imagelist1.jpg',
+      description:
+          'Juicy beef patty infused with black truffle sauce and cheddar cheese.',
+      category: 'Burgers',
     ),
     ProductModel(
       name: 'Royal Cheese Burger',
       price: 6.49,
       rating: 4.9,
       imagePath: 'assets/images/imagelist2.jpg',
+      description:
+          'Classic double beef burger with melted American cheese and fresh lettuce.',
+      category: 'Burgers',
     ),
     ProductModel(
       name: 'Spicy Khmer Burger',
       price: 5.49,
       rating: 4.7,
       imagePath: 'assets/images/imagelist3.jpg',
+      description:
+          'Spicy seasoned grilled patty with special local herbal sauce.',
+      category: 'Burgers',
     ),
     ProductModel(
       name: 'Double Beef Delight',
       price: 7.99,
       rating: 4.9,
       imagePath: 'assets/images/imagelist1.jpg',
+      description:
+          'Loaded two-tier beef patty stacked with crispy bacon and cheese.',
+      category: 'Burgers',
     ),
   ];
 
+  // ==========================================================================
+  // HELPER FUNCTIONS (WIDGET BUILDERS)
+  // ==========================================================================
+
+  // Helper function to build animated bouncing buttons
+  Widget _buildAnimatedButton({
+    required Widget child,
+    VoidCallback? onPressed,
+    double scaleFactor = 0.95,
+    Duration duration = const Duration(milliseconds: 120),
+  }) {
+    return _AnimatedButton(
+      onPressed: onPressed,
+      scaleFactor: scaleFactor,
+      duration: duration,
+      child: child,
+    );
+  }
+
+  // Helper function to build category pills
+  Widget _buildCategoryPill({
+    required String title,
+    required IconData icon,
+    VoidCallback? onTap,
+    Color? iconColor,
+    Color? backgroundColor,
+  }) {
+    final effectiveBrandRed = iconColor ?? AppColors.brandRed;
+    final effectiveBg = backgroundColor ?? AppColors.brandLightRed;
+
+    return _buildAnimatedButton(
+      onPressed: onTap ?? () {},
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 64,
+            width: 64,
+            decoration: BoxDecoration(
+              color: effectiveBg, // Light red background
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: effectiveBrandRed, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper function to build product card using helper/product_card.dart
+  Widget _buildProductCard(ProductModel product) {
+    return ProductCard(
+      product: product,
+      isFavorite: _favoriteProductNames.contains(product.name),
+      onFavoriteChanged: (isFav) {
+        setState(() {
+          if (isFav) {
+            _favoriteProductNames.add(product.name);
+          } else {
+            _favoriteProductNames.remove(product.name);
+          }
+        });
+      },
+    );
+  }
+
+  // Helper function to build slider dots
   Widget _buildDot({required bool isActive}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -59,23 +141,17 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 8,
       width: isActive ? 24 : 8,
       decoration: BoxDecoration(
-        color: isActive ? _brandRed : Colors.white.withValues(alpha: 0.7),
+        color:
+            isActive ? AppColors.brandRed : Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(4),
       ),
-    );
-  }
-
-  Widget _buildCategoryPill(String title, IconData icon) {
-    return CategoryPill(
-      title: title,
-      icon: icon,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _brandColor,
+      backgroundColor: AppColors.brandColor,
       body: Column(
         children: [
           // ==========================================
@@ -118,12 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
+                      const Text(
                         'ANGKOR BURGER',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
-                          color: _brandRed,
+                          color: AppColors.brandRed,
                         ),
                       ),
                     ],
@@ -131,24 +207,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   // Right Side: Notification & Profile Icons
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
+                      _buildAnimatedButton(
+                        onPressed: () {},
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.notifications_none,
+                              color: Colors.black87, size: 20),
                         ),
-                        child: const Icon(Icons.notifications_none,
-                            color: Colors.black87, size: 20),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
+                      _buildAnimatedButton(
+                        onPressed: () {},
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.person_outline,
+                              color: Colors.black87, size: 20),
                         ),
-                        child: const Icon(Icons.person_outline,
-                            color: Colors.black87, size: 20),
                       ),
                     ],
                   ),
@@ -180,13 +262,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Colors.grey),
                         suffixIcon: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _brandRed,
-                              borderRadius: BorderRadius.circular(10),
+                          child: _buildAnimatedButton(
+                            onPressed: () {},
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.brandRed,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.tune,
+                                  color: Colors.white, size: 20),
                             ),
-                            child: const Icon(Icons.tune,
-                                color: Colors.white, size: 20),
                           ),
                         ),
                         border: InputBorder.none,
@@ -268,26 +354,60 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        'View All',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: _brandRed,
+                      _buildAnimatedButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'View All',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.brandRed,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildCategoryPill('Burgers', Icons.lunch_dining),
-                      _buildCategoryPill('Hot Dogs', Icons.fastfood),
-                      _buildCategoryPill('Pizza', Icons.local_pizza),
-                      _buildCategoryPill('Drinks', Icons.local_drink),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Burgers', icon: Icons.lunch_dining),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Hot Dogs', icon: Icons.fastfood),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Pizza', icon: Icons.local_pizza),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Drinks', icon: Icons.local_drink),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Snacks', icon: Icons.bakery_dining),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Desserts', icon: Icons.icecream),
+                        ),
+                        _buildCategoryPill(
+                            title: 'Combos', icon: Icons.takeout_dining),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -297,19 +417,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Popular Burgers',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _brandRed,
+                          color: AppColors.brandRed,
                         ),
                       ),
-                      TextButton(
+                      _buildAnimatedButton(
                         onPressed: () {},
                         child: Text(
                           'See all',
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -326,13 +449,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 14,
                       mainAxisSpacing: 14,
-                      childAspectRatio: 0.72,
+                      childAspectRatio: 173 / 259,
                     ),
                     itemBuilder: (context, index) {
                       final product = _sampleProducts[index];
-                      return ProductCard(
-                        product: product,
-                      );
+                      return _buildProductCard(product);
                     },
                   ),
                 ],
@@ -340,6 +461,48 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// INTERNAL ANIMATED SCALE BUTTON WRAPPER
+// ============================================================================
+class _AnimatedButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onPressed;
+  final double scaleFactor;
+  final Duration duration;
+
+  const _AnimatedButton({
+    required this.child,
+    this.onPressed,
+    this.scaleFactor = 0.95,
+    this.duration = const Duration(milliseconds: 120),
+  });
+
+  @override
+  State<_AnimatedButton> createState() => _AnimatedButtonState();
+}
+
+class _AnimatedButtonState extends State<_AnimatedButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.onPressed == null) return widget.child;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onPressed,
+      child: AnimatedScale(
+        scale: _isPressed ? widget.scaleFactor : 1.0,
+        duration: widget.duration,
+        curve: Curves.easeOutCubic,
+        child: widget.child,
       ),
     );
   }

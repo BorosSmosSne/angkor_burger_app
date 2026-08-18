@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +19,14 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
+        },
+      ),
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
       home: const HomeScreen(),
