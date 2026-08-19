@@ -1,8 +1,8 @@
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
+import 'package:angkor_burger_app/screens/product_detail_screen.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -32,6 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
       description:
           'Juicy beef patty infused with black truffle sauce and cheddar cheese.',
       category: 'Burgers',
+      sizePrices: {'S': 5.99, 'M': 6.99, 'L': 7.99},
+      addOns: {
+        'Chicken Strip': 1.50,
+        'Truffle Aioli': 0.75,
+        'Extra Cheese': 1.00,
+      },
+      ingredients: [
+        'Beef Patty',
+        'Truffle Sauce',
+        'Cheddar Cheese',
+        'Brioche Bun',
+        'Lettuce',
+        'Pickles',
+      ],
     ),
     ProductModel(
       name: 'Royal Cheese Burger',
@@ -41,6 +55,20 @@ class _HomeScreenState extends State<HomeScreen> {
       description:
           'Classic double beef burger with melted American cheese and fresh lettuce.',
       category: 'Burgers',
+      sizePrices: {'S': 6.49, 'M': 7.49, 'L': 8.49},
+      addOns: {
+        'Extra Bacon': 1.50,
+        'Extra Cheese': 1.00,
+        'Fried Egg': 0.80,
+      },
+      ingredients: [
+        'Double Beef',
+        'American Cheese',
+        'Lettuce',
+        'Tomato',
+        'Special Sauce',
+        'Sesame Bun',
+      ],
     ),
     ProductModel(
       name: 'Spicy Khmer Burger',
@@ -50,6 +78,20 @@ class _HomeScreenState extends State<HomeScreen> {
       description:
           'Spicy seasoned grilled patty with special local herbal sauce.',
       category: 'Burgers',
+      sizePrices: {'S': 5.49, 'M': 6.49, 'L': 7.49},
+      addOns: {
+        'Spicy Sauce': 0.50,
+        'Fried Egg': 0.80,
+        'Extra Patty': 2.00,
+      },
+      ingredients: [
+        'Grilled Patty',
+        'Khmer Herbal Sauce',
+        'Chili',
+        'Fresh Lettuce',
+        'Cucumber',
+        'Toasted Bun',
+      ],
     ),
     ProductModel(
       name: 'Double Beef Delight',
@@ -59,6 +101,20 @@ class _HomeScreenState extends State<HomeScreen> {
       description:
           'Loaded two-tier beef patty stacked with crispy bacon and cheese.',
       category: 'Burgers',
+      sizePrices: {'S': 7.99, 'M': 8.99, 'L': 9.99},
+      addOns: {
+        'Extra Cheese': 1.00,
+        'Crispy Bacon': 1.50,
+        'Grilled Mushrooms': 1.20,
+      },
+      ingredients: [
+        'Double Beef Patty',
+        'Crispy Bacon',
+        'Melted Cheese',
+        'Caramelized Onion',
+        'BBQ Sauce',
+        'Brioche Bun',
+      ],
     ),
   ];
 
@@ -120,6 +176,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProductCard(ProductModel product) {
     return ProductCard(
       product: product,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(product: product),
+          ),
+        );
+      },
       isFavorite: _favoriteProductNames.contains(product.name),
       onFavoriteChanged: (isFav) {
         setState(() {
@@ -258,8 +322,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search menus items',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
-                        prefixIcon: const Icon(CupertinoIcons.search,
-                            color: Colors.grey),
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
                         suffixIcon: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: _buildAnimatedButton(
@@ -452,8 +516,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       childAspectRatio: 173 / 259,
                     ),
                     itemBuilder: (context, index) {
-                      final product = _sampleProducts[index];
-                      return _buildProductCard(product);
+                      final currentProduct = _sampleProducts[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProductDetailScreen(product: currentProduct),
+                            ),
+                          );
+                        },
+                        child: _buildProductCard(currentProduct),
+                      );
                     },
                   ),
                 ],

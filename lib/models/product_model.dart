@@ -5,12 +5,19 @@ class ProductModel {
   final String imagePath;
   final String description;
   final String category;
+  final Map<String, double> sizePrices;
+  final Map<String, double> addOns;
+  final List<String> ingredients;
 
-  ProductModel(
-      {required this.name,
-      required this.price,
-      required this.rating,
-      required this.imagePath,
-      required this.description,
-      required this.category});
+  ProductModel({
+    required this.name,
+    required this.price,
+    required this.rating,
+    required this.imagePath,
+    required this.description,
+    required this.category,
+    required this.sizePrices,
+    required this.addOns,
+    this.ingredients = const [],
+  });
 }
