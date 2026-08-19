@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:angkor_burger_app/screens/home_screen.dart';
+import 'package:angkor_burger_app/screens/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,9 +29,7 @@ class MainApp extends StatelessWidget {
       ),
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
-      home: const HomeScreen(),
-      // const AuthScreen(),
-      // const SplashScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
