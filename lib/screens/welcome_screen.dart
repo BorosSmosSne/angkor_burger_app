@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/screens/auth_screen.dart';
+import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/helpers/animated_button.dart';
 import 'package:flutter/material.dart';
 
@@ -192,8 +193,15 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 24),
                     AnimatedButton(
-                      onPressed: () {},
-                      child: Text(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomeScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
                         'Continue as a guest',
                         style: TextStyle(
                           color: Colors.black,
