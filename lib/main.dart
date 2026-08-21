@@ -29,7 +29,9 @@ class MainApp extends StatelessWidget {
       ),
       locale: DevicePreview.locale(context),
       builder: DevicePreview.appBuilder,
-      home: const SplashScreen(),
+      home:
+          // const WelcomeScreen(),
+          const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

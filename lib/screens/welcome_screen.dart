@@ -1,6 +1,5 @@
 import 'package:angkor_burger_app/screens/auth_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
-import 'package:angkor_burger_app/helpers/animated_button.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -9,6 +8,24 @@ class WelcomeScreen extends StatelessWidget {
   static const Color _brandRed = Color(0xFF8B1D1D);
   static const Color _bgColor = Color(0xFFFCF5F0);
   static const Color _brandYellow = Color(0xFFFEBB0B);
+
+  Route _createAuthRoute({required bool isSignUp}) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 700),
+      reverseTransitionDuration: const Duration(milliseconds: 700),
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          AuthScreen(initialIsSignUp: isSignUp),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeInOut),
+          ),
+          child: child,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,82 +41,72 @@ class WelcomeScreen extends StatelessWidget {
               child: Image.asset(
                 'assets/images/AngkorWat_victor.png',
                 width: 270,
-                // height: 120,
                 fit: BoxFit.contain,
               ),
             ),
           ),
-          Positioned(
-            top: 320,
-            left: 0,
-            right: 0,
+          SafeArea(
             child: Center(
-              child: Hero(
-                tag: 'app_logo',
-                child: Image.asset(
-                  'assets/images/logo_angkorBurger.png',
-                  width: 320,
-                  height: 250,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 400,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _brandYellow,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.storefront_rounded,
-                  color: Colors.white,
-                  size: 26,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 460,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 32),
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28),
+                    const SizedBox(height: 100),
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Taste the Kingdom',
-                            textAlign: TextAlign.center,
+                          const Text(
+                            'Welcome',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: _brandYellow,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Login or Sign Up to Continue...',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Hero(
+                            tag: 'app_logo',
+                            child: Image.asset(
+                              'assets/images/logo_angkorBurger.png',
+                              height: 250,
+                              width: 250,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'ANGKOR BURGER',
                             style: TextStyle(
                               fontSize: 24,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                               color: _brandRed,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text(
+                          const SizedBox(height: 8),
+                          const Text(
                             'Angkor Burger serves tasty, fresh, and \n affordable burgers for everyone.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -111,41 +118,30 @@ class WelcomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(height: 40),
+                    const SizedBox(height: 40),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 22),
-                      child: AnimatedButton(
+                      child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
+                          Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const AuthScreen(initialIsSignUp: true),
-                            ),
+                            _createAuthRoute(isSignUp: true),
+                            (route) => false,
                           );
                         },
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AuthScreen(initialIsSignUp: true),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _brandRed,
-                            minimumSize: const Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _brandRed,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: const Text(
+                          'Sign Up',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -153,52 +149,40 @@ class WelcomeScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 22),
-                      child: AnimatedButton(
+                      child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
+                          Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const AuthScreen(initialIsSignUp: false),
-                            ),
+                            _createAuthRoute(isSignUp: false),
+                            (route) => false,
                           );
                         },
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const AuthScreen(initialIsSignUp: false),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Text(
-                            'Already have an Account',
-                            style: TextStyle(
-                              color: _brandRed,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: const Text(
+                          'Already have an Account',
+                          style: TextStyle(
+                            color: _brandRed,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 24),
-                    AnimatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
+                    const SizedBox(height: 24),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const HomeScreen(),
                           ),
+                          (route) => false,
                         );
                       },
                       child: const Text(
