@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/data/dummy_data.dart';
 import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 import 'package:angkor_burger_app/screens/product_detail_screen.dart';
@@ -14,109 +15,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // List of Banner Images for Carousel Slider
-  final List<String> _bannerImages = [
-    'assets/images/imagelist1.jpg',
-    'assets/images/imagelist2.jpg',
-    'assets/images/imagelist3.jpg',
-  ];
+  
 
   int _currentBannerIndex = 0;
   final Set<String> _favoriteProductNames = {};
 
-  final List<ProductModel> _sampleProducts = [
-    ProductModel(
-      name: 'Truffle Burger',
-      price: 5.99,
-      rating: 4.8,
-      imagePath: 'assets/images/imagelist1.jpg',
-      description:
-          'Juicy beef patty infused with black truffle sauce and cheddar cheese.',
-      category: 'Burgers',
-      sizePrices: {'S': 5.99, 'M': 6.99, 'L': 7.99},
-      addOns: {
-        'Chicken Strip': 1.50,
-        'Truffle Aioli': 0.75,
-        'Extra Cheese': 1.00,
-      },
-      ingredients: [
-        'Beef Patty',
-        'Truffle Sauce',
-        'Cheddar Cheese',
-        'Brioche Bun',
-        'Lettuce',
-        'Pickles',
-      ],
-    ),
-    ProductModel(
-      name: 'Royal Cheese Burger',
-      price: 6.49,
-      rating: 4.9,
-      imagePath: 'assets/images/imagelist2.jpg',
-      description:
-          'Classic double beef burger with melted American cheese and fresh lettuce.',
-      category: 'Burgers',
-      sizePrices: {'S': 6.49, 'M': 7.49, 'L': 8.49},
-      addOns: {
-        'Extra Bacon': 1.50,
-        'Extra Cheese': 1.00,
-        'Fried Egg': 0.80,
-      },
-      ingredients: [
-        'Double Beef',
-        'American Cheese',
-        'Lettuce',
-        'Tomato',
-        'Special Sauce',
-        'Sesame Bun',
-      ],
-    ),
-    ProductModel(
-      name: 'Spicy Khmer Burger',
-      price: 5.49,
-      rating: 4.7,
-      imagePath: 'assets/images/imagelist3.jpg',
-      description:
-          'Spicy seasoned grilled patty with special local herbal sauce.',
-      category: 'Burgers',
-      sizePrices: {'S': 5.49, 'M': 6.49, 'L': 7.49},
-      addOns: {
-        'Spicy Sauce': 0.50,
-        'Fried Egg': 0.80,
-        'Extra Patty': 2.00,
-      },
-      ingredients: [
-        'Grilled Patty',
-        'Khmer Herbal Sauce',
-        'Chili',
-        'Fresh Lettuce',
-        'Cucumber',
-        'Toasted Bun',
-      ],
-    ),
-    ProductModel(
-      name: 'Double Beef Delight',
-      price: 7.99,
-      rating: 4.9,
-      imagePath: 'assets/images/imagelist1.jpg',
-      description:
-          'Loaded two-tier beef patty stacked with crispy bacon and cheese.',
-      category: 'Burgers',
-      sizePrices: {'S': 7.99, 'M': 8.99, 'L': 9.99},
-      addOns: {
-        'Extra Cheese': 1.00,
-        'Crispy Bacon': 1.50,
-        'Grilled Mushrooms': 1.20,
-      },
-      ingredients: [
-        'Double Beef Patty',
-        'Crispy Bacon',
-        'Melted Cheese',
-        'Caramelized Onion',
-        'BBQ Sauce',
-        'Brioche Bun',
-      ],
-    ),
-  ];
+  
 
   // ==========================================================================
   // HELPER FUNCTIONS (WIDGET BUILDERS)
@@ -368,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             });
                           },
                         ),
-                        items: _bannerImages.map((imagePath) {
+                        items: bannerImages.map((imagePath) {
                           return Builder(
                             builder: (BuildContext context) {
                               return ClipRRect(
@@ -396,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         bottom: 12,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: _bannerImages.asMap().entries.map((entry) {
+                          children: bannerImages.asMap().entries.map((entry) {
                             return _buildDot(
                               isActive: _currentBannerIndex == entry.key,
                             );
@@ -461,15 +365,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.only(right: 20),
                           child: _buildCategoryPill(
-                              title: 'Snacks', icon: Icons.bakery_dining),
+                              title: 'Sandwiches', icon: Icons.breakfast_dining),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 20),
+                          child: _buildCategoryPill(
+                              title: 'Chicken', icon: Icons.kebab_dining),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(right: 20),
                           child: _buildCategoryPill(
                               title: 'Desserts', icon: Icons.icecream),
                         ),
-                        _buildCategoryPill(
-                            title: 'Combos', icon: Icons.takeout_dining),
                       ],
                     ),
                   ),
@@ -507,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _sampleProducts.length,
+                    itemCount: sampleProducts.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -516,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       childAspectRatio: 173 / 259,
                     ),
                     itemBuilder: (context, index) {
-                      final currentProduct = _sampleProducts[index];
+                      final currentProduct = sampleProducts[index];
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(

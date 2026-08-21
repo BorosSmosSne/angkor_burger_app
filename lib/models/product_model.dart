@@ -1,4 +1,5 @@
 class ProductModel {
+  final int id;
   final String name;
   final double price;
   final double rating;
@@ -8,8 +9,11 @@ class ProductModel {
   final Map<String, double> sizePrices;
   final Map<String, double> addOns;
   final List<String> ingredients;
+  final String nutritionFacts;
+  final String? specialInstruction;
 
   ProductModel({
+    required this.id,
     required this.name,
     required this.price,
     required this.rating,
@@ -19,5 +23,7 @@ class ProductModel {
     required this.sizePrices,
     required this.addOns,
     this.ingredients = const [],
+    required this.nutritionFacts,
+    this.specialInstruction,
   });
 }
