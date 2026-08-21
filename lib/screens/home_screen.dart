@@ -1,5 +1,7 @@
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/data/dummy_data.dart';
+import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
+import 'package:angkor_burger_app/helpers/custom_bottom_nav_bar.dart';
 import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
@@ -17,17 +19,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // List of Banner Images for Carousel Slider
-  
 
   int _currentBannerIndex = 0;
+  int _selectedNavIndex = 0;
   final Set<String> _favoriteProductNames = {};
   final List<CartItem> _cartItems = [];
 
   String _selectedCategory = 'All';
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-
-  
 
   final List<Map<String, dynamic>> _categories = [
     {'title': 'All', 'icon': Icons.restaurant_menu},
@@ -129,6 +129,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) => setState(() {}));
   }
 
+  void _onBottomNavTapped(int index) {
+    if (index == 2) {
+      // Cart Tab
+      _navigateToCart();
+    } else {
+      setState(() {
+        _selectedNavIndex = index;
+        if (index == 0) {
+          _selectedCategory = 'All';
+          _searchController.clear();
+          _searchQuery = '';
+        }
+      });
+    }
+  }
+
   // ==========================================================================
   // HELPER FUNCTIONS (WIDGET BUILDERS)
   // ==========================================================================
@@ -155,8 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
     VoidCallback? onTap,
     bool isSelected = false,
   }) {
-    final effectiveBrandRed =
-        isSelected ? Colors.white : AppColors.brandRed;
+    final effectiveBrandRed = isSelected ? Colors.white : AppColors.brandRed;
     final effectiveBg =
         isSelected ? AppColors.brandRed : AppColors.brandLightRed;
 
@@ -217,8 +232,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ).then((_) => setState(() {}));
       },
       onAddToCart: () {
-        final defaultSize =
-            product.sizePrices.containsKey('M') ? 'M' : (product.sizePrices.keys.firstOrNull ?? 'M');
+        final defaultSize = product.sizePrices.containsKey('M')
+            ? 'M'
+            : (product.sizePrices.keys.firstOrNull ?? 'M');
         final unitPrice = product.sizePrices[defaultSize] ?? product.price;
         _addToCart(
           CartItem(
@@ -278,115 +294,10 @@ class _HomeScreenState extends State<HomeScreen> {
           // ==========================================
           // 1. FLOATING WHITE HEADER CONTAINER
           // ==========================================
-          Container(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(32),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 20,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Left Side: Logo & Text
-                  Row(
-                    children: [
-                      Image.asset(
-                        'assets/images/logo_angkorBurger.png',
-                        height: 38,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.lunch_dining, size: 36),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'ANGKOR BURGER',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.brandRed,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Right Side: Cart Icon with live Badge & Profile Icon
-                  Row(
-                    children: [
-                      _buildAnimatedButton(
-                        onPressed: _navigateToCart,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.shopping_cart_outlined,
-                                color: Colors.black87,
-                                size: 20,
-                              ),
-                            ),
-                            if (_totalCartItems > 0)
-                              Positioned(
-                                right: -2,
-                                top: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.brandRed,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 18,
-                                    minHeight: 18,
-                                  ),
-                                  child: Text(
-                                    '$_totalCartItems',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildAnimatedButton(
-                        onPressed: () {},
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person_outline,
-                            color: Colors.black87,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          AngkorAppBar(
+            totalCartItems: _totalCartItems,
+            onCartPressed: _navigateToCart,
+            onProfilePressed: () {},
           ),
 
           // Scrollable Body Content
@@ -425,7 +336,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             const Icon(Icons.search, color: Colors.grey),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.grey),
+                                icon:
+                                    const Icon(Icons.clear, color: Colors.grey),
                                 onPressed: () {
                                   _searchController.clear();
                                   setState(() {
@@ -751,6 +663,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedNavIndex,
+        cartItemCount: _totalCartItems,
+        onItemTapped: _onBottomNavTapped,
+      ),
     );
   }
 }
@@ -796,4 +713,3 @@ class _AnimatedButtonState extends State<_AnimatedButton> {
     );
   }
 }
-

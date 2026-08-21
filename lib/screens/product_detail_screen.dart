@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 import 'package:angkor_burger_app/screens/cart_screen.dart';
@@ -130,134 +131,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.brandColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Navigation Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.brandRed,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.white24,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Image.asset(
-                          'assets/images/logo_angkorBurger.png',
-                          height: 24,
-                          errorBuilder: (c, e, s) => const Icon(
-                            Icons.fastfood,
-                            color: AppColors.brandYellow,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'ANGKOR BURGER',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // Cart Icon with live badge
-                        GestureDetector(
-                          onTap: _navigateToCart,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white24,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.shopping_cart_outlined,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                              if (_cartCount > 0)
-                                Positioned(
-                                  right: -4,
-                                  top: -4,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.brandYellow,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 16,
-                                      minHeight: 16,
-                                    ),
-                                    child: Text(
-                                      '$_cartCount',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const CircleAvatar(
-                          radius: 14,
-                          backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                        )
-                      ],
-                    )
-                  ],
-                ),
-              ),
-            ),
+      body: Column(
+        children: [
+          // Top Navigation Header
+          AngkorAppBar(
+            showBackButton: true,
+            totalCartItems: _cartCount,
+            onCartPressed: _navigateToCart,
+            onBackPressed: () => Navigator.pop(context),
+          ),
 
-            // Scrollable Content
-            Expanded(
-              child: SingleChildScrollView(
+          // Scrollable Content
+          Expanded(
+            child: SingleChildScrollView(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Column(
@@ -565,8 +451,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildSectionTitle(IconData icon, String title) {
@@ -614,7 +499,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           color: isSelected ? AppColors.brandLightRed : Colors.white,
           border: Border.all(
             color: isSelected ? AppColors.brandRed : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 3 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
