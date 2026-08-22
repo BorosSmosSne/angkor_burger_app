@@ -28,24 +28,34 @@ class CategoryPill extends StatelessWidget {
       padding: const EdgeInsets.only(right: 16),
       child: GestureDetector(
         onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 64,
-              width: 64,
-              decoration: BoxDecoration(
-                color: effectiveBg, // Light red background
-                borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: effectiveBg, // Light red background
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: effectiveBrandRed, size: 28),
               ),
-              child: Icon(icon, color: effectiveBrandRed, size: 32),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -35,6 +35,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+      }
+    });
     if (widget.product.sizePrices.containsKey('M')) {
       _selectedSize = 'M';
     } else if (widget.product.sizePrices.isNotEmpty) {
@@ -79,6 +84,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _navigateToCart() {
+    ScaffoldMessenger.of(context).clearSnackBars();
     if (widget.cartItems != null &&
         widget.onUpdateCartQuantity != null &&
         widget.onRemoveCartItem != null &&
@@ -107,24 +113,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
 
     widget.onAddToCart?.call(cartItem);
-    setState(() {});
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Added ${_quantity}x ${widget.product.name} (Size $_selectedSize) to cart!',
-        ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: AppColors.brandRed,
-        action: widget.cartItems != null
-            ? SnackBarAction(
-                label: 'VIEW CART',
-                textColor: Colors.white,
-                onPressed: _navigateToCart,
-              )
-            : null,
-      ),
-    );
+    Navigator.pop(context, true);
   }
 
   @override
