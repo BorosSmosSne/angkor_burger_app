@@ -1,6 +1,8 @@
-import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/helpers/animated_button.dart';
+import 'package:angkor_burger_app/models/user_model.dart';
+import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool initialIsSignUp;
@@ -43,6 +45,32 @@ class _AuthScreenState extends State<AuthScreen>
       curve: Curves.easeInOutCubic,
       reverseCurve: Curves.easeInOutCubic,
     );
+
+    _loadRememberedCredentials();
+  }
+
+  Future<void> _loadRememberedCredentials() async {
+    final SharedPreferences preferences =
+        await SharedPreferences.getInstance();
+    final bool remember =
+        preferences.getBool('angkor.pos.remember_me') ?? false;
+    if (remember) {
+      final String? savedEmail =
+          preferences.getString('angkor.pos.saved_email');
+      final String? savedPassword =
+          preferences.getString('angkor.pos.saved_password');
+      if (mounted) {
+        setState(() {
+          _rememberMe = true;
+          if (savedEmail != null && savedEmail.isNotEmpty) {
+            _emailController.text = savedEmail;
+          }
+          if (savedPassword != null && savedPassword.isNotEmpty) {
+            _passwordController.text = savedPassword;
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -53,6 +81,110 @@ class _AuthScreenState extends State<AuthScreen>
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> saveCredentials(User user) async {
+    // Save the token to local storage
+    final SharedPreferences preferences =
+        await SharedPreferences.getInstance();
+    await preferences.setString('angkor.pos.token', user.token ?? '');
+
+    // Save or clear Remember Me credentials
+    if (_rememberMe) {
+      await preferences.setBool('angkor.pos.remember_me', true);
+      await preferences.setString(
+          'angkor.pos.saved_email', _emailController.text.trim());
+      await preferences.setString(
+          'angkor.pos.saved_password', _passwordController.text);
+    } else {
+      await preferences.setBool('angkor.pos.remember_me', false);
+      await preferences.remove('angkor.pos.saved_email');
+      await preferences.remove('angkor.pos.saved_password');
+    }
+  }
+
+  Future<void> login() async {
+    final email = 'angkor@gmail.com';
+    final password = 'sv9@123';
+    if (_emailController.text == email &&
+        _passwordController.text == password) {
+      final responeToken =
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI4IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4MDAwMDAwMDB9.6n4w6_uCgMbeuY7Vp_tHhUksL8Pq8wW7Fk1Z6_9_1z2';
+      await saveCredentials(User(token: responeToken));
+      // print('Logged in successfully!');
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Login Failed',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Invalid email or password',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleSubmit() {
+    if (_animation.value > 0.5) {
+      // Sign Up mode
+      if (_emailController.text.trim().isEmpty ||
+          _passwordController.text.trim().isEmpty) {
+        showDialog(
+          context: context,
+          builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Sign Up Failed',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 8),
+                  Text('Please enter your email and password'),
+                ],
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
+      );
+    } else {
+      login();
+    }
   }
 
   void _toggleTab(bool isSignUp) {
@@ -276,25 +408,9 @@ class _AuthScreenState extends State<AuthScreen>
 
                           // Submit Button
                           AnimatedButton(
-                            onPressed: () {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomeScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            },
+                            onPressed: _handleSubmit,
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const HomeScreen(),
-                                  ),
-                                  (route) => false,
-                                );
-                              },
+                              onPressed: _handleSubmit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _brandRed,
                                 foregroundColor: Colors.white,

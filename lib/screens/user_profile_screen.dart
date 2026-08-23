@@ -5,12 +5,14 @@ import 'package:angkor_burger_app/helpers/custom_bottom_nav_bar.dart';
 import 'package:angkor_burger_app/helpers/user_avatar.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/user_profile_model.dart';
+import 'package:angkor_burger_app/screens/auth_screen.dart';
 import 'package:angkor_burger_app/screens/cart_screen.dart';
 import 'package:angkor_burger_app/screens/edit_profile_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/menu_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final List<CartItem>? cartItems;
@@ -465,6 +467,56 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
+  Future<void> _handleLogout() async {
+    final SharedPreferences preferences =
+        await SharedPreferences.getInstance();
+    await preferences.remove('angkor.pos.token');
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logged out successfully'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const AuthScreen(initialIsSignUp: false),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              _handleLogout();
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onBottomNavTapped(int index) {
     ScaffoldMessenger.of(context).clearSnackBars();
     if (widget.onNavigateToTab != null) {
@@ -627,39 +679,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                       // Logout Button
                       OutlinedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              title: const Text('Logout'),
-                              content: const Text(
-                                  'Are you sure you want to log out?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                            Text('Logged out successfully'),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
-                                  },
-                                  child: const Text('Logout',
-                                      style: TextStyle(color: Colors.red)),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
+                        onPressed: _showLogoutDialog,
                         icon: const Icon(Icons.logout, color: Colors.red),
                         label: const Text(
                           'Log Out',
