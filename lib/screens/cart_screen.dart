@@ -2,6 +2,7 @@ import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/helpers/custom_bottom_nav_bar.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
+import 'package:angkor_burger_app/screens/checkout_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/menu_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
@@ -106,94 +107,6 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  void _showCheckoutDialog() {
-    if (widget.cartItems.isEmpty) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.green, size: 28),
-              SizedBox(width: 8),
-              Text(
-                'Order Placed!',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Thank you for your order at Angkor Burger!',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.brandColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Items count:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text('$_totalItemCount items'),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total Paid:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        Text(
-                          '\$${_totalPrice.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.brandRed,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                widget.onClearCart();
-                Navigator.pop(dialogContext); // Close dialog
-                Navigator.pop(context); // Return to previous screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.brandRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Back to Home',
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _onBottomNavTapped(int index) {
     ScaffoldMessenger.of(context).clearSnackBars();
@@ -333,9 +246,6 @@ class _CartScreenState extends State<CartScreen> {
                 widget.onNavigateToTab?.call(0);
               }
             },
-            showCart: false,
-            showProfile: true,
-            onProfilePressed: _navigateToProfile,
             actions: [
               if (widget.cartItems.isNotEmpty)
                 TextButton.icon(
@@ -768,7 +678,24 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _showCheckoutDialog,
+            onPressed: () {
+              if (widget.cartItems.isEmpty) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CheckoutScreen(
+                    cartItems: widget.cartItems,
+                    subtotal: _subtotal,
+                    deliveryFee: _deliveryFee,
+                    discountAmount: _discountAmount,
+                    taxAmount: _taxAmount,
+                    total: _totalPrice,
+                    onClearCart: widget.onClearCart,
+                    onNavigateToTab: widget.onNavigateToTab,
+                  ),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: _brandRed,
               minimumSize: const Size(double.infinity, 56),

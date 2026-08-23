@@ -1,13 +1,11 @@
 import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/data/favorites_manager.dart';
 import 'package:angkor_burger_app/helpers/animated_button.dart';
+import 'package:angkor_burger_app/screens/favorites_screen.dart';
 import 'package:flutter/material.dart';
 
 /// A universal, reusable custom header / app bar widget with Angkor Burger branding,
-/// live cart badge, profile button, back button, and full customization for every screen.
-///
-/// Can be used both as:
-/// 1. `appBar: AngkorAppBar(...)` in a `Scaffold`
-/// 2. Directly inside a `Column` or body: `Column(children: [AngkorAppBar(...), ...])`
+/// heart favorite button with live badge, back button, and full customization for every screen.
 class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
   final Widget? titleWidget;
@@ -16,6 +14,9 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
   final VoidCallback? onBackPressed;
   final Widget? leading;
+  final bool showFavorite;
+  final int? totalFavorites;
+  final VoidCallback? onFavoritePressed;
   final bool showCart;
   final int totalCartItems;
   final VoidCallback? onCartPressed;
@@ -39,10 +40,13 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackButton = false,
     this.onBackPressed,
     this.leading,
-    this.showCart = true,
+    this.showFavorite = true,
+    this.totalFavorites,
+    this.onFavoritePressed,
+    this.showCart = false,
     this.totalCartItems = 0,
     this.onCartPressed,
-    this.showProfile = true,
+    this.showProfile = false,
     this.onProfilePressed,
     this.actions,
     this.centerTitle = false,
@@ -56,6 +60,15 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(height);
+
+  void _defaultOnFavoritePressed(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FavoritesScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +126,7 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         );
 
-    // 4. Trailing / Actions Section
+    // 4. Trailing / Actions Section (Favorite Icon Button)
     Widget trailingSection;
     if (actions != null) {
       trailingSection = Row(
@@ -124,72 +137,72 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
       trailingSection = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (showCart) ...[
-            AnimatedButton(
-              onPressed: onCartPressed,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.shopping_cart_outlined,
-                      color: Colors.black87,
-                      size: 20,
-                    ),
-                  ),
-                  if (totalCartItems > 0)
-                    Positioned(
-                      right: -3,
-                      top: -3,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
+          if (showFavorite)
+            ValueListenableBuilder<Set<String>>(
+              valueListenable: FavoritesManager.favoriteProductNamesNotifier,
+              builder: (context, favNames, _) {
+                final count = totalFavorites ?? favNames.length;
+                return AnimatedButton(
+                  onPressed: () {
+                    if (onFavoritePressed != null) {
+                      onFavoritePressed!();
+                    } else {
+                      _defaultOnFavoritePressed(context);
+                    }
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.brandRed,
+                          color: count > 0
+                              ? AppColors.brandLightRed
+                              : Colors.grey.shade100,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          '$totalCartItems',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Icon(
+                          count > 0
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          color: count > 0
+                              ? AppColors.brandRed
+                              : Colors.black87,
+                          size: 20,
                         ),
                       ),
-                    ),
-                ],
-              ),
+                      if (count > 0)
+                        Positioned(
+                          right: -3,
+                          top: -3,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.brandRed,
+                              shape: BoxShape.circle,
+                              border:
+                                  Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '$count',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
-          ],
-          if (showCart && showProfile) const SizedBox(width: 8),
-          if (showProfile) ...[
-            AnimatedButton(
-              onPressed: onProfilePressed ?? () {},
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  color: Colors.black87,
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
         ],
       );
     }

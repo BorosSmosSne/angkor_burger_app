@@ -32,6 +32,7 @@ class MainApp extends StatelessWidget {
       home:
           // const MenuScreen(),
           const HomeScreen(),
+      // CheckoutScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -161,9 +161,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           // Header
           AngkorAppBar(
             title: 'MY PROFILE',
-            totalCartItems: _totalCartItems,
             showBackButton: false,
-            onCartPressed: _navigateToCart,
           ),
 
           // Scrollable Profile Details

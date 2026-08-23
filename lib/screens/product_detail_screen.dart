@@ -1,8 +1,8 @@
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
+import 'package:angkor_burger_app/data/favorites_manager.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
-import 'package:angkor_burger_app/screens/cart_screen.dart';
 import 'package:flutter/material.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -78,30 +78,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return _calculatedUnitPrice * _quantity;
   }
 
-  int get _cartCount {
-    if (widget.cartItems == null) return 0;
-    return widget.cartItems!.fold(0, (sum, item) => sum + item.quantity);
-  }
 
-  void _navigateToCart() {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    if (widget.cartItems != null &&
-        widget.onUpdateCartQuantity != null &&
-        widget.onRemoveCartItem != null &&
-        widget.onClearCart != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CartScreen(
-            cartItems: widget.cartItems!,
-            onUpdateQuantity: widget.onUpdateCartQuantity!,
-            onRemoveItem: widget.onRemoveCartItem!,
-            onClearCart: widget.onClearCart!,
-          ),
-        ),
-      ).then((_) => setState(() {}));
-    }
-  }
 
   void _handleAddToCart() {
     final cartItem = CartItem(
@@ -125,9 +102,38 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // Top Navigation Header
           AngkorAppBar(
             showBackButton: true,
-            totalCartItems: _cartCount,
-            onCartPressed: _navigateToCart,
             onBackPressed: () => Navigator.pop(context),
+            actions: [
+              ValueListenableBuilder<Set<String>>(
+                valueListenable: FavoritesManager.favoriteProductNamesNotifier,
+                builder: (context, favNames, _) {
+                  final isFav = FavoritesManager.isFavorite(widget.product);
+                  return GestureDetector(
+                    onTap: () {
+                      FavoritesManager.toggleFavorite(widget.product);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isFav
+                            ? AppColors.brandLightRed
+                            : Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFav
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: isFav
+                            ? AppColors.brandRed
+                            : Colors.black87,
+                        size: 20,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
 
           // Scrollable Content

@@ -6,6 +6,8 @@ import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 import 'package:angkor_burger_app/screens/cart_screen.dart';
+import 'package:angkor_burger_app/data/favorites_manager.dart';
+import 'package:angkor_burger_app/screens/favorites_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:angkor_burger_app/screens/product_detail_screen.dart';
@@ -40,7 +42,6 @@ class _MenuScreenState extends State<MenuScreen> {
   int _selectedCategoryIndex = 0;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  final Set<String> _favoriteProductNames = {};
 
   late List<CartItem> _cartItems;
 
@@ -354,12 +355,25 @@ class _MenuScreenState extends State<MenuScreen> {
         children: [
           // 1. FLOATING HEADER / APP BAR
           AngkorAppBar(
-            title: 'ANGKOR BURGER',
-            totalCartItems: _totalCartItems,
+            title: 'MENU',
             showBackButton: false,
-            onBackPressed: () => Navigator.pop(context),
-            onCartPressed: _navigateToCart,
-            onProfilePressed: _navigateToProfile,
+            onFavoritePressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FavoritesScreen(
+                    cartItems: _cartItems,
+                    onAddToCart: _addToCart,
+                    onUpdateCartQuantity: _updateCartQuantity,
+                    onRemoveCartItem: _removeFromCart,
+                    onClearCart: _clearCart,
+                    onNavigateToTab: widget.onNavigateToTab,
+                  ),
+                ),
+              ).then((_) {
+                if (mounted) setState(() {});
+              });
+            },
           ),
 
           // 2. SCROLLABLE BODY
@@ -566,16 +580,12 @@ class _MenuScreenState extends State<MenuScreen> {
                             );
                             _showCartSnackBar();
                           },
-                          isFavorite: _favoriteProductNames
-                              .contains(currentProduct.name),
+                          isFavorite:
+                              FavoritesManager.isFavorite(currentProduct),
                           onFavoriteChanged: (isFav) {
                             setState(() {
-                              if (isFav) {
-                                _favoriteProductNames.add(currentProduct.name);
-                              } else {
-                                _favoriteProductNames
-                                    .remove(currentProduct.name);
-                              }
+                              FavoritesManager.setFavorite(
+                                  currentProduct, isFav);
                             });
                           },
                         );
@@ -585,7 +595,6 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
             ),
           ),
-
         ],
       ),
       bottomNavigationBar: widget.showBottomNav
