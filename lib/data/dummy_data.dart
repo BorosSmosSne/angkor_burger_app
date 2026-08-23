@@ -39,7 +39,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Truffle Burger',
     price: 5.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/burger/Burger_burger.jpg',
     description:
         'Juicy beef patty infused with black truffle sauce and cheddar cheese.',
     category: 'Burgers',
@@ -64,7 +64,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Royal Cheese Burger',
     price: 6.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/burger/cheese_burger.jpg',
     description:
         'Classic double beef burger with melted American cheese and fresh lettuce.',
     category: 'Burgers',
@@ -89,7 +89,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy Khmer Burger',
     price: 5.49,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/burger/Ch_burger.jpg',
     description:
         'Spicy seasoned grilled patty with special local herbal sauce.',
     category: 'Burgers',
@@ -114,7 +114,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Double Beef Delight',
     price: 7.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/burger/smash_burger.jpg',
     description:
         'Loaded two-tier beef patty stacked with crispy bacon and cheese.',
     category: 'Burgers',
@@ -139,7 +139,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Smoky BBQ Bacon Burger',
     price: 6.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/burger/BBQ Chicken_burger.jpg',
     description:
         'Thick beef patty topped with hardwood smoked bacon and sweet smokey BBQ glaze.',
     category: 'Burgers',
@@ -164,7 +164,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Mushroom Swiss Burger',
     price: 6.29,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/burger/bu_burger.jpg',
     description:
         'Savory grilled beef topped with melted Swiss cheese and sautéed garlic butter mushrooms.',
     category: 'Burgers',
@@ -187,7 +187,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Crispy Fish Burger',
     price: 5.79,
     rating: 4.5,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/burger/burger040_burger.jpg',
     description:
         'Golden crumbed white fish fillet with zesty tartar sauce and crisp iceberg lettuce.',
     category: 'Burgers',
@@ -210,7 +210,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Black Pepper Beef Burger',
     price: 6.89,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/burger/burger060_burger.jpg',
     description:
         'Peppery seasoned beef patty glazed with aromatic black pepper gravy sauce.',
     category: 'Burgers',
@@ -233,7 +233,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Avocado Veggie Burger',
     price: 5.99,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/burger/burger33_burger.jpg',
     description:
         'Hearty plant-based patty served with fresh sliced avocado, ripe tomatoes and vegan aioli.',
     category: 'Burgers',
@@ -256,7 +256,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Triple Tower Monster Burger',
     price: 9.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/burger/pork_burger.jpg',
     description:
         'Gigantic triple-tier beef patty burger loaded with triple cheddar, bacon and secret sauce.',
     category: 'Burgers',
@@ -285,7 +285,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Classic American Hot Dog',
     price: 3.99,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_1.jpg',
     description:
         'All-beef grilled frankfurter topped with yellow mustard, ketchup and sweet relish.',
     category: 'Hot Dogs',
@@ -309,7 +309,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Cheesy Bacon Hot Dog',
     price: 4.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_2.jpg',
     description:
         'Smoked sausage smothered with rich warm cheddar cheese sauce and chopped crispy bacon.',
     category: 'Hot Dogs',
@@ -332,7 +332,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy Chili Cheese Dog',
     price: 5.29,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_3.jpg',
     description:
         'Juicy grilled frank blanketed in hearty beef chili con carne, grated cheddar and diced onions.',
     category: 'Hot Dogs',
@@ -355,7 +355,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Angkor Special Hot Dog',
     price: 4.79,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_4.jpg',
     description:
         'Local fusion sausage dog topped with pickled green papaya, spicy chili garlic and fresh cilantro.',
     category: 'Hot Dogs',
@@ -378,7 +378,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Korean Corndog Supreme',
     price: 4.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_5.jpg',
     description:
         'Half mozzarella and half beef sausage coated in crispy panko batter, sugar dusted and sauced.',
     category: 'Hot Dogs',
@@ -400,7 +400,7 @@ final List<ProductModel> sampleProducts = [
     name: 'BBQ Pulled Pork Hot Dog',
     price: 5.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_6.jpg',
     description:
         'Savory sausage topped with 12-hour slow-cooked pulled pork, sweet BBQ glaze and crispy slaw.',
     category: 'Hot Dogs',
@@ -423,7 +423,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Jalapeño Popper Dog',
     price: 4.89,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_7.jpg',
     description:
         'Smoked frank stuffed with whipped garlic cream cheese, sliced jalapeños and crispy bacon bits.',
     category: 'Hot Dogs',
@@ -446,7 +446,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Chicago Style Hot Dog',
     price: 4.69,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_8.jpg',
     description:
         'Poppyseed bun loaded with all-beef frank, fresh tomato slices, pickle spear, sport peppers and celery salt.',
     category: 'Hot Dogs',
@@ -470,7 +470,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Tokyo Teriyaki Dog',
     price: 4.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_9.jpg',
     description:
         'Grilled sausage drizzled with Japanese sweet teriyaki glaze, kewpie mayo, nori seaweed and sesame.',
     category: 'Hot Dogs',
@@ -494,7 +494,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Guacamole Bacon Dog',
     price: 5.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/hotdog/hotdog_10.jpg',
     description:
         'Grilled beef sausage topped with fresh lime guacamole, crispy bacon bits and pico de gallo salsa.',
     category: 'Hot Dogs',
@@ -521,7 +521,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Margherita Classic Pizza',
     price: 8.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/pizza/pizza.jpg',
     description:
         'Traditional Italian pizza topped with San Marzano tomato sauce, fresh mozzarella and sweet basil.',
     category: 'Pizza',
@@ -544,7 +544,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Pepperoni Feast Pizza',
     price: 9.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/pizza/Mit_pizza.jpg',
     description:
         'Crispy cupping pepperoni slices layered edge-to-edge over mozzarella and rich herb tomato sauce.',
     category: 'Pizza',
@@ -566,7 +566,7 @@ final List<ProductModel> sampleProducts = [
     name: 'BBQ Chicken Supreme Pizza',
     price: 10.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/pizza/supreme_pizza.jpg',
     description:
         'Tender grilled chicken tossed in sweet smokey BBQ sauce with red onions, mozzarella and fresh cilantro.',
     category: 'Pizza',
@@ -589,7 +589,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Four Cheese Alfredo Pizza',
     price: 9.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/pizza/Veggie-Pizza-12.jpg',
     description:
         'Decadent white pizza loaded with mozzarella, creamy gorgonzola, aged parmesan, and velvety ricotta.',
     category: 'Pizza',
@@ -612,7 +612,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Hawaiian Tropical Pizza',
     price: 8.99,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/pizza/Honey_pizza.jpg',
     description:
         'Sweet golden pineapple chunks and savory smoked honey ham over melted mozzarella and tomato sauce.',
     category: 'Pizza',
@@ -634,7 +634,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Angkor Spicy Beef Pizza',
     price: 10.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/pizza/Topped_pizza.jpg',
     description:
         'Bold fusion pizza with Khmer spiced minced beef, bird eye chilies, crispy shallots and mozzarella.',
     category: 'Pizza',
@@ -657,7 +657,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Meat Lovers Deluxe Pizza',
     price: 11.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/pizza/4mix_pizza.jpg',
     description:
         'Ultimate carnivore pie stacked with pepperoni, Italian sausage, smoked ham, bacon and seasoned beef.',
     category: 'Pizza',
@@ -681,7 +681,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Garden Veggie Delight Pizza',
     price: 8.49,
     rating: 4.5,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/pizza/vetable_pizza.jpg',
     description:
         'Fresh bell peppers, button mushrooms, red onions, black olives and juicy tomatoes on herb crust.',
     category: 'Pizza',
@@ -705,7 +705,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Seafood Tom Yum Pizza',
     price: 11.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/pizza/Doug_pizza.jpg',
     description:
         'Tangy and spicy Tom Yum base topped with juicy shrimp, tender calamari, kaffir lime leaf and cheese.',
     category: 'Pizza',
@@ -728,7 +728,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Truffle Mushroom Pizza',
     price: 11.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/pizza/Yummy_Fries_pizza.jpg',
     description:
         'Earthy wild mushrooms, rich black truffle cream sauce, fresh thyme, mozzarella and shaved parmesan.',
     category: 'Pizza',
@@ -755,7 +755,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Angkor Iced Milk Coffee',
     price: 2.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/drink/drink 14.jpg',
     description:
         'Traditional rich dark roast Robusta drip coffee stirred with sweet condensed milk over crushed ice.',
     category: 'Drinks',
@@ -778,7 +778,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Fresh Passionfruit Juice',
     price: 2.29,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/drink/drink 16.jpg',
     description:
         'Tangy and sweet freshly squeezed passionfruit pulp with real seeds and pure cane sugar.',
     category: 'Drinks',
@@ -800,7 +800,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Brown Sugar Bubble Milk',
     price: 3.29,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/drink/drink 17.jpg',
     description:
         'Creamy whole milk swirled with warm hand-crafted brown sugar syrup and chewy tapioca pearls.',
     category: 'Drinks',
@@ -823,7 +823,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Matcha Green Tea Latte',
     price: 2.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/drink/drink 18.jpg',
     description:
         'Premium Japanese Uji matcha whisked with fresh velvety milk and a light touch of vanilla.',
     category: 'Drinks',
@@ -845,7 +845,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Mango Coconut Slushie',
     price: 2.89,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/drink/drink 21.jpg',
     description:
         'Tropical blend of ripe sweet mangoes and creamy coconut milk blended with fine crystal ice.',
     category: 'Drinks',
@@ -867,7 +867,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Sparkling Strawberry Lemonade',
     price: 2.69,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/drink/drink 24.jpg',
     description:
         'Fizzy sparkling soda infused with freshly pressed lemon juice and hand-crushed wild strawberries.',
     category: 'Drinks',
@@ -887,10 +887,10 @@ final List<ProductModel> sampleProducts = [
   ),
   ProductModel(
     id: 37,
-    name: 'Thai Iced Tea with Cream',
+    name: 'Khmer Iced Tea with Cream',
     price: 2.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/drink/drink 15.jpg',
     description:
         'Aromatic spiced Ceylon tea brewed to perfection and layered with creamy evaporated milk.',
     category: 'Drinks',
@@ -913,7 +913,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Ice Blended Chocolate Oreo',
     price: 3.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/drink/drink 28.jpg',
     description:
         'Rich Dutch cocoa blended with crunchy Oreo cookies, milk and topped with decadent chocolate drizzle.',
     category: 'Drinks',
@@ -937,7 +937,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Dragon Fruit Lychee Cooler',
     price: 2.79,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/drink/drink 29.jpg',
     description:
         'Vibrant magenta dragon fruit juice paired with floral lychee syrup and sparkling soda over ice.',
     category: 'Drinks',
@@ -960,7 +960,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Angkor Craft Root Beer Float',
     price: 2.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/drink/drink 30.jpg',
     description:
         'Chilled artisanal sarsaparilla root beer served with a generous scoop of creamy vanilla ice cream.',
     category: 'Drinks',
@@ -985,7 +985,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Khmer Num Pang Pâté Sandwich',
     price: 3.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/sandwich/meat_sandwich_7.jpg',
     description:
         'Crispy warm baguette spread with rich pork pâté, cured ham, pickled papaya-daikon and fresh chili.',
     category: 'Sandwiches',
@@ -1010,7 +1010,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Classic Club Sandwich',
     price: 4.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/sandwich/Club_sandwich_2.jpg',
     description:
         'Triple-decker toasted bread stacked with roasted turkey breast, crispy bacon, lettuce, tomato and mayo.',
     category: 'Sandwiches',
@@ -1034,7 +1034,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Crispy Chicken Bacon Ranch Sub',
     price: 5.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/sandwich/chicken_sandwich_1.jpg',
     description:
         'Golden chicken strips, crispy bacon, melted provolone and herb buttermilk ranch on a toasted sub roll.',
     category: 'Sandwiches',
@@ -1058,7 +1058,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Philly Cheesesteak Sandwich',
     price: 6.29,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/sandwich/pan_sandwich_8.jpg',
     description:
         'Thinly sliced seared ribeye beef, caramelized onions and melted provolone packed into a warm hoagie roll.',
     category: 'Sandwiches',
@@ -1081,7 +1081,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Tuna Melt Supreme',
     price: 4.49,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/sandwich/Sandwich_9.jpg',
     description:
         'Flaky Albacore tuna salad topped with thick melted cheddar cheese and sliced tomato on griddled sourdough.',
     category: 'Sandwiches',
@@ -1103,7 +1103,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Grilled Ham & Triple Cheese',
     price: 3.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/sandwich/Grilled_sandwich_5.jpg',
     description:
         'Smoked ham layered with melted cheddar, swiss and mozzarella cheese between butter-toasted brioche bread.',
     category: 'Sandwiches',
@@ -1126,7 +1126,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Smoked Salmon Cream Cheese Bagel',
     price: 5.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/sandwich/healthy_sandwich_6.jpg',
     description:
         'Toasted everything bagel smeared with herb dill cream cheese, premium Norwegian smoked salmon and capers.',
     category: 'Sandwiches',
@@ -1149,7 +1149,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy BBQ Pulled Beef Sandwich',
     price: 5.79,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/sandwich/Crispy Recipe_sandwich_3.jpg',
     description:
         'Tender pulled beef simmered in spicy chipotle BBQ sauce with crispy fried onions on a toasted bun.',
     category: 'Sandwiches',
@@ -1171,7 +1171,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Mediterranean Veggie Panini',
     price: 4.69,
     rating: 4.6,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/sandwich/Dhokla_sandwich_4.jpg',
     description:
         'Pressed ciabatta filled with grilled zucchini, fire roasted red peppers, crumbled feta, spinach and basil pesto.',
     category: 'Sandwiches',
@@ -1195,7 +1195,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy Sriracha Bacon Brioche',
     price: 4.29,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/sandwich/Pudding_sandwich_10.jpg',
     description:
         'Fluffy butter-scrambled eggs, thick crispy bacon, melted cheddar cheese and spicy sriracha aioli.',
     category: 'Sandwiches',
@@ -1222,7 +1222,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Angkor Crispy Fried Chicken',
     price: 3.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/chicken/chicken 2.jpg',
     description:
         'Golden and ultra-crispy bone-in chicken marinated with signature 11 herbs and spices.',
     category: 'Chicken',
@@ -1244,7 +1244,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy Korean Yangnyeom Chicken',
     price: 5.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/chicken/chicken 3.jpg',
     description:
         'Double-fried crispy chicken tossed in sweet, sticky, and spicy Gochujang red glaze and toasted sesame.',
     category: 'Chicken',
@@ -1266,7 +1266,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Honey Butter Crispy Wings',
     price: 4.99,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/chicken/chicken 4.jpg',
     description:
         'Crunchy fried chicken wings tossed in rich melted sweet honey butter sauce with savory garlic notes.',
     category: 'Chicken',
@@ -1288,7 +1288,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Nashville Hot Chicken Tenders',
     price: 5.29,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/chicken/chicken 5.jpg',
     description:
         'Extra large hand-breaded chicken breast tenders brushed with spicy cayenne chili oil and dill pickles.',
     category: 'Chicken',
@@ -1310,7 +1310,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Garlic Parmesan Wings',
     price: 5.19,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/chicken/chicken 8.jpg',
     description:
         'Crispy fried chicken wings drenched in warm roasted garlic butter and smothered with aged parmesan.',
     category: 'Chicken',
@@ -1332,7 +1332,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Smoky BBQ Chicken Drumsticks',
     price: 4.79,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/chicken/chicken 15.jpg',
     description:
         'Juicy grilled and fried chicken drumsticks glazed in thick smoky brown sugar BBQ sauce.',
     category: 'Chicken',
@@ -1353,7 +1353,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Golden Chicken Popcorn Crunch',
     price: 3.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/chicken/chicken 19.jpg',
     description:
         'Bite-sized tender crispy chicken popcorn seasoned with spicy paprika and savory cheddar dust.',
     category: 'Chicken',
@@ -1375,7 +1375,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Charcoal Grilled Lemongrass Chicken',
     price: 4.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/chicken/chicken 22.jpg',
     description:
         'Authentic Khmer-style grilled chicken marinated in lemongrass, turmeric, kaffir lime and garlic.',
     category: 'Chicken',
@@ -1399,7 +1399,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Spicy Buffalo Chicken Wings',
     price: 4.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/chicken/chicken 24.jpg',
     description:
         'Authentic New York style hot wings tossed in spicy tangy cayenne pepper sauce and creamy blue cheese.',
     category: 'Chicken',
@@ -1420,7 +1420,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Crispy Chicken Nuggets (10pcs)',
     price: 3.79,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/chicken/chicken 25.jpg',
     description:
         'Tender all-white meat chicken nuggets in a light crispy golden tempura batter with your choice of dip.',
     category: 'Chicken',
@@ -1446,7 +1446,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Choco Lava Warm Cake',
     price: 3.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/dessert/dessert 1.jpg',
     description:
         'Warm Belgian dark chocolate cake with an irresistible molten chocolate center, served warm.',
     category: 'Desserts',
@@ -1467,7 +1467,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Crispy Churros with Chocolate Dip',
     price: 3.29,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/dessert/dessert 5.jpg',
     description:
         'Freshly fried Spanish pastry dough tossed in cinnamon sugar and served with thick warm dark chocolate dip.',
     category: 'Desserts',
@@ -1488,7 +1488,7 @@ final List<ProductModel> sampleProducts = [
     name: 'New York Strawberry Cheesecake',
     price: 4.49,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/dessert/dessert 6.jpg',
     description:
         'Classic dense and creamy New York cheesecake on a buttery graham cracker crust with sweet strawberry glaze.',
     category: 'Desserts',
@@ -1509,7 +1509,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Matcha Green Tea Ice Cream Sundae',
     price: 3.79,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/dessert/dessert 8.jpg',
     description:
         'Creamy Uji matcha soft-serve ice cream topped with sweet red azuki beans, chewy mochi balls and waffle cone.',
     category: 'Desserts',
@@ -1531,7 +1531,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Warm Apple Cinnamon Pie',
     price: 2.99,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/dessert/dessert 10.jpg',
     description:
         'Flaky golden butter crust filled with spiced caramelized Granny Smith apples and fragrant cinnamon.',
     category: 'Desserts',
@@ -1553,7 +1553,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Mango Sticky Rice Parfait',
     price: 3.89,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/dessert/dessert 14.jpg',
     description:
         'Warm coconut sticky rice layered with fresh sweet Cambodian mango slices and salted coconut cream.',
     category: 'Desserts',
@@ -1575,7 +1575,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Classic Italian Tiramisu Cup',
     price: 4.29,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/dessert/dessert 17.jpg',
     description:
         'Individual cup of espresso-soaked Savoiardi ladyfingers layered with rich mascarpone cream and cocoa.',
     category: 'Desserts',
@@ -1596,7 +1596,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Double Fudge Brownie Supreme',
     price: 3.49,
     rating: 4.8,
-    imagePath: 'assets/images/imagelist2.jpg',
+    imagePath: 'assets/images/dessert/dessert 22.jpg',
     description:
         'Warm, dense chocolate fudge brownie loaded with chocolate chunks, vanilla ice cream and hot fudge.',
     category: 'Desserts',
@@ -1618,7 +1618,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Crispy Banana Fritters w/ Honey',
     price: 2.79,
     rating: 4.7,
-    imagePath: 'assets/images/imagelist3.jpg',
+    imagePath: 'assets/images/dessert/dessert 25.jpg',
     description:
         'Sweet ripe bananas coated in golden sesame batter, fried crispy and drizzled with pure wild honey.',
     category: 'Desserts',
@@ -1640,7 +1640,7 @@ final List<ProductModel> sampleProducts = [
     name: 'Belgian Waffle with Fresh Berries',
     price: 4.99,
     rating: 4.9,
-    imagePath: 'assets/images/imagelist1.jpg',
+    imagePath: 'assets/images/dessert/dessert 28.jpg',
     description:
         'Crispy on the outside, fluffy on the inside Belgian pearl sugar waffle topped with fresh berries and maple syrup.',
     category: 'Desserts',
