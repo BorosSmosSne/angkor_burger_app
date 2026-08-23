@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/checkout_model.dart';
@@ -43,12 +44,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       CheckoutModel.defaultPaymentMethods;
 
   // Text Controllers for the form
-  final TextEditingController _nameController =
-      TextEditingController(text: 'Kosal Ban');
-  final TextEditingController _phoneController =
-      TextEditingController(text: '+855 12 345 678');
-  final TextEditingController _addressController =
-      TextEditingController(text: 'Street 240, Daun Penh, Phnom Penh');
+  late final TextEditingController _nameController =
+      TextEditingController(text: UserProfileManager.currentProfile.name);
+  late final TextEditingController _phoneController =
+      TextEditingController(text: UserProfileManager.currentProfile.phone);
+  late final TextEditingController _addressController =
+      TextEditingController(text: UserProfileManager.currentProfile.address);
   final TextEditingController _floorController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _promoController = TextEditingController();

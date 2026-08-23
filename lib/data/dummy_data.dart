@@ -1,34 +1,9 @@
-import 'package:angkor_burger_app/models/notification_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 
 final List<String> bannerImages = [
   'assets/images/imagelist1.jpg',
   'assets/images/imagelist2.jpg',
   'assets/images/imagelist3.jpg',
-];
-final List<NotificationModel> sampleNotifications = [
-  NotificationModel(
-    id: 'n1',
-    title: '50% Off Your Next Meal! 🎉',
-    description:
-        'Claim your exclusive flash deal today. Valid for all popular burgers.',
-    date: 'Oct 24, 2026',
-    promoCode: 'FLASH50',
-  ),
-  NotificationModel(
-    id: 'n2',
-    title: 'Free Delivery Weekend',
-    description: 'Enjoy free delivery on all orders over \$15.00 this weekend.',
-    date: 'Oct 22, 2026',
-    isRead: true, // This one has already been read
-  ),
-  NotificationModel(
-    id: 'n3',
-    title: 'New Truffle Burger Added',
-    description: 'Try our brand new Truffle Burger with A5 Wagyu beef!',
-    date: 'Oct 20, 2026',
-    isRead: true,
-  ),
 ];
 final List<ProductModel> sampleProducts = [
   // ==========================================

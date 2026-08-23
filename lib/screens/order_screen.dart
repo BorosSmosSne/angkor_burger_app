@@ -171,6 +171,7 @@ class _OrderScreenState extends State<OrderScreen>
           AngkorAppBar(
             title: 'MY ORDERS',
             showBackButton: false,
+            showFavorite: false,
           ),
 
           // Tab Bar
