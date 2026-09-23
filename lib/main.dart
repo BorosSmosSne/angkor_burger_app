@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:angkor_burger_app/screens/burger_menu_screen.dart';
 import 'package:angkor_burger_app/screens/splash_screen.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
@@ -33,7 +34,7 @@ class MainApp extends StatelessWidget {
         fontFamily: 'Poppins',
         useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: const BurgerMenuScreen(),
       // const MenuScreen(),
       // const HomeScreen(),
       // CheckoutScreen(),

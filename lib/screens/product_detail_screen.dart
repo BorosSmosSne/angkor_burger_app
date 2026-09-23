@@ -78,8 +78,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return _calculatedUnitPrice * _quantity;
   }
 
-
-
   void _handleAddToCart() {
     final cartItem = CartItem(
       product: widget.product,
@@ -124,9 +122,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         isFav
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
-                        color: isFav
-                            ? AppColors.brandRed
-                            : Colors.black87,
+                        color: isFav ? AppColors.brandRed : Colors.black87,
                         size: 20,
                       ),
                     ),
@@ -139,314 +135,307 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Dynamic Product Image in a styled Card
-                    Card(
-                      elevation: 4,
-                      shadowColor: Colors.black12,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(
-                        widget.product.imagePath,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Dynamic Product Image in a styled Card
+                  Card(
+                    elevation: 4,
+                    shadowColor: Colors.black12,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.asset(
+                      widget.product.imagePath,
+                      width: double.infinity,
+                      height: 260,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
                         width: double.infinity,
                         height: 260,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          width: double.infinity,
-                          height: 260,
-                          color: Colors.grey.shade300,
-                          child: const Icon(
-                            Icons.image,
-                            size: 60,
-                            color: Colors.grey,
-                          ),
+                        color: Colors.grey.shade300,
+                        child: const Icon(
+                          Icons.image,
+                          size: 60,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                  ),
+                  const SizedBox(height: 20),
 
-                    // Product Information Card
-                    Card(
-                      elevation: 2,
-                      shadowColor: Colors.black12,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.product.name,
-                                        style: const TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black87,
-                                        ),
+                  // Product Information Card
+                  Card(
+                    elevation: 2,
+                    shadowColor: Colors.black12,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.product.name,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.black87,
                                       ),
-                                      const SizedBox(height: 6),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.brandLightRed,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              widget.product.category,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.brandRed,
-                                              ),
-                                            ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
                                           ),
-                                          const SizedBox(width: 8),
-                                          const Icon(
-                                            Icons.star,
-                                            color: AppColors.brandYellow,
-                                            size: 16,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.brandLightRed,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            widget.product.rating.toString(),
+                                          child: Text(
+                                            widget.product.category,
                                             style: const TextStyle(
-                                              fontSize: 14,
+                                              fontSize: 12,
                                               fontWeight: FontWeight.bold,
+                                              color: AppColors.brandRed,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // Quantity Selector
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade100,
-                                    borderRadius: BorderRadius.circular(24),
-                                    border:
-                                        Border.all(color: Colors.grey.shade300),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      IconButton(
-                                        icon:
-                                            const Icon(Icons.remove, size: 16),
-                                        onPressed: _decreaseQuantity,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 32,
-                                          minHeight: 32,
                                         ),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 4),
-                                        child: Text(
-                                          '$_quantity',
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          Icons.star,
+                                          color: AppColors.brandYellow,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          widget.product.rating.toString(),
                                           style: const TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.add, size: 16),
-                                        onPressed: _increaseQuantity,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 32,
-                                          minHeight: 32,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-
-                            // Dynamic Description
-                            if (widget.product.description.isNotEmpty) ...[
-                              const SizedBox(height: 14),
-                              Text(
-                                widget.product.description,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
-                                  height: 1.5,
+                              ),
+                              // Quantity Selector
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove, size: 16),
+                                      onPressed: _decreaseQuantity,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 32,
+                                        minHeight: 32,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 4),
+                                      child: Text(
+                                        '$_quantity',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add, size: 16),
+                                      onPressed: _increaseQuantity,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 32,
+                                        minHeight: 32,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
+                          ),
+
+                          // Dynamic Description
+                          if (widget.product.description.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              widget.product.description,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                                height: 1.5,
+                              ),
+                            ),
                           ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Dynamic Ingredients Section
+                  if (widget.product.ingredients.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _buildSectionTitle(Icons.restaurant, 'Ingredients'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: widget.product.ingredients
+                          .map((ingredient) => _buildIngredientChip(ingredient))
+                          .toList(),
+                    ),
+                  ],
+
+                  // Dynamic Size Selection Section
+                  if (widget.product.sizePrices.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _buildSectionTitle(Icons.straighten, 'Select Size'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: widget.product.sizePrices.entries.map((entry) {
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: _buildSizeOption(
+                              entry.key,
+                              '\$${entry.value.toStringAsFixed(2)}',
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+
+                  // Dynamic Add-ons Selection Section
+                  if (widget.product.addOns.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _buildSectionTitle(Icons.add_circle_outline, 'Add-ons'),
+                    const SizedBox(height: 12),
+                    ...widget.product.addOns.entries.map((entry) {
+                      final isSelected = _selectedAddOns.contains(entry.key);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _buildAddOnCheckbox(
+                          entry.key,
+                          '+\$${entry.value.toStringAsFixed(2)}',
+                          isSelected,
+                          (val) {
+                            setState(() {
+                              if (val == true) {
+                                _selectedAddOns.add(entry.key);
+                              } else {
+                                _selectedAddOns.remove(entry.key);
+                              }
+                            });
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+
+          // Bottom Add to Cart Bar in a Card
+          Card(
+            margin: EdgeInsets.zero,
+            elevation: 8,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Total Price',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '\$${_calculatedTotalPrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.brandRed,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _handleAddToCart,
+                        icon: const Icon(
+                          Icons.shopping_cart_outlined,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Add to Cart',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brandRed,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                       ),
                     ),
-
-                    // Dynamic Ingredients Section
-                    if (widget.product.ingredients.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      _buildSectionTitle(Icons.restaurant, 'Ingredients'),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: widget.product.ingredients
-                            .map((ingredient) =>
-                                _buildIngredientChip(ingredient))
-                            .toList(),
-                      ),
-                    ],
-
-                    // Dynamic Size Selection Section
-                    if (widget.product.sizePrices.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      _buildSectionTitle(Icons.straighten, 'Select Size'),
-                      const SizedBox(height: 12),
-                      Row(
-                        children:
-                            widget.product.sizePrices.entries.map((entry) {
-                          return Expanded(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: _buildSizeOption(
-                                entry.key,
-                                '\$${entry.value.toStringAsFixed(2)}',
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-
-                    // Dynamic Add-ons Selection Section
-                    if (widget.product.addOns.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      _buildSectionTitle(Icons.add_circle_outline, 'Add-ons'),
-                      const SizedBox(height: 12),
-                      ...widget.product.addOns.entries.map((entry) {
-                        final isSelected = _selectedAddOns.contains(entry.key);
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _buildAddOnCheckbox(
-                            entry.key,
-                            '+\$${entry.value.toStringAsFixed(2)}',
-                            isSelected,
-                            (val) {
-                              setState(() {
-                                if (val == true) {
-                                  _selectedAddOns.add(entry.key);
-                                } else {
-                                  _selectedAddOns.remove(entry.key);
-                                }
-                              });
-                            },
-                          ),
-                        );
-                      }),
-                    ],
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-
-            // Bottom Add to Cart Bar in a Card
-            Card(
-              margin: EdgeInsets.zero,
-              elevation: 8,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Total Price',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '\$${_calculatedTotalPrice.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.brandRed,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _handleAddToCart,
-                          icon: const Icon(
-                            Icons.shopping_cart_outlined,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            'Add to Cart',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandRed,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSectionTitle(IconData icon, String title) {

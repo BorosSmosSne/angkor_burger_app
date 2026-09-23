@@ -125,7 +125,7 @@ class _ProductCardState extends State<ProductCard> {
                               child: Text(
                                 widget.product.name,
                                 style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                                    fontSize: 16, fontWeight: FontWeight.w600),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),

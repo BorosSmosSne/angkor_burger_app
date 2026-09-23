@@ -189,9 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   p.description
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase()) ||
-                  p.category
-                      .toLowerCase()
-                      .contains(_searchQuery.toLowerCase());
+                  p.category.toLowerCase().contains(_searchQuery.toLowerCase());
               final matchesPrice = p.price >= tempPriceRange.start &&
                   p.price <= tempPriceRange.end;
               return matchesCategory && matchesSearch && matchesPrice;
@@ -235,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'Filter & Adjust',
                                 style: TextStyle(
                                   fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w500,
                                   color: Colors.black87,
                                 ),
                               ),
@@ -385,8 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 tempPriceRange.end == 25.0,
                             onTap: () {
                               setModalState(() {
-                                tempPriceRange =
-                                    const RangeValues(0.0, 25.0);
+                                tempPriceRange = const RangeValues(0.0, 25.0);
                               });
                             },
                           ),
@@ -396,8 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 tempPriceRange.end == 4.0,
                             onTap: () {
                               setModalState(() {
-                                tempPriceRange =
-                                    const RangeValues(0.0, 4.0);
+                                tempPriceRange = const RangeValues(0.0, 4.0);
                               });
                             },
                           ),
@@ -407,8 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 tempPriceRange.end == 8.0,
                             onTap: () {
                               setModalState(() {
-                                tempPriceRange =
-                                    const RangeValues(4.0, 8.0);
+                                tempPriceRange = const RangeValues(4.0, 8.0);
                               });
                             },
                           ),
@@ -418,8 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 tempPriceRange.end == 15.0,
                             onTap: () {
                               setModalState(() {
-                                tempPriceRange =
-                                    const RangeValues(8.0, 15.0);
+                                tempPriceRange = const RangeValues(8.0, 15.0);
                               });
                             },
                           ),
@@ -429,8 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 tempPriceRange.end == 25.0,
                             onTap: () {
                               setModalState(() {
-                                tempPriceRange =
-                                    const RangeValues(15.0, 25.0);
+                                tempPriceRange = const RangeValues(15.0, 25.0);
                               });
                             },
                           ),
@@ -918,8 +911,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: AppColors.brandRed,
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: const Icon(
                                         Icons.tune,
