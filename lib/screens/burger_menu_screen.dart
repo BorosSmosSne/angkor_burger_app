@@ -367,6 +367,10 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     final inactiveCount = _allProducts.where((p) => !p.isActive).length;
     final popularCount = _allProducts.where((p) => p.isPopular).length;
 
+    // Kitchen Inventory Counts:
+    final inStockCount = _allProducts.where((p) => p.isInStock).length;
+    final outOfStockCount = _allProducts.where((p) => !p.isInStock).length;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -421,6 +425,35 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                 badgeText: inactiveCount > 0 ? 'Review' : 'Clean',
                 badgeColor: inactiveCount > 0 ? Colors.redAccent : Colors.grey,
                 icon: Icons.visibility_off,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Flexible(
+              flex: 1,
+              child: _buildMetricCard(
+                title: 'IN STOCK',
+                value: '$inStockCount Available',
+                subtext: 'Ready to order',
+                badgeText: 'Kitchen Ready',
+                badgeColor: Colors.teal,
+                icon: Icons.inventory_2_outlined,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              flex: 1,
+              child: _buildMetricCard(
+                title: 'OUT OF STOCK',
+                value: '$outOfStockCount Sold Out',
+                subtext: 'Restock needed',
+                badgeText: outOfStockCount > 0 ? 'Alert' : 'None',
+                badgeColor:
+                    outOfStockCount > 0 ? Colors.deepOrange : Colors.grey,
+                icon: Icons.remove_shopping_cart_outlined,
               ),
             ),
           ],

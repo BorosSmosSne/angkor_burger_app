@@ -132,10 +132,15 @@ class ProductModel {
       defaultValue: false,
     );
 
-    final bool parsedInStock = parseBool(
-      json['is_in_stock'] ?? json['isInStock'] ?? json['in_stock'],
-      defaultValue: true,
-    );
+    final rawInStock = json['is_in_stock'];
+    final bool parsedInStock = rawInStock == null ||
+        rawInStock == 1 ||
+        rawInStock == true ||
+        rawInStock == '1';
+    // final bool parsedInStock = parseBool(
+    //   json['is_in_stock'] ?? json['isInStock'] ?? json['in_stock'],
+    //   defaultValue: true,
+    // );
 
     return ProductModel(
       id: json['id'] is int
