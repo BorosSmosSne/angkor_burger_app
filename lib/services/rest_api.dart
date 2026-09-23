@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:angkor_burger_app/models/product_model.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart'; //[cite: 8, 10]
 // import '../models/burger_models.dart';
@@ -16,6 +17,18 @@ class RestApi {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       };
+  static Future<List<dynamic>> fetchCategories() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/categories'));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is List ? data : (data['data'] ?? []);
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    }
+    return [];
+  }
 
   // 1. READ (GET all products)[cite: 10]
   static Future<List<ProductModel>> fetchProducts() async {
