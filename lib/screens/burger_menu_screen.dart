@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:angkor_burger_app/screens/add_product_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -495,7 +496,9 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadProducts,
+            onPressed: () {
+              _loadProducts();
+            },
           ),
         ],
       ),
@@ -545,7 +548,18 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showEditDialog(burger),
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AddProductScreen(existingProduct: burger),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadProducts(); // Refreshes list after saving changes
+                          }
+                        },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
@@ -560,8 +574,17 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddDialog,
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF7A1C1C),
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddProductScreen()),
+          );
+          if (result == true) {
+            _loadProducts(); // Refresh list after adding
+          }
+        },
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
