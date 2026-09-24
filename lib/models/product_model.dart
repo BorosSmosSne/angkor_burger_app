@@ -9,6 +9,7 @@ class ProductModel {
   final bool isActive;
   final bool isPopular;
   final bool isInStock;
+  final int stockQuantity; // Added numeric stock
   final Map<String, double> sizePrices;
   final Map<String, double> addOns;
   final List<String> ingredients;
@@ -26,6 +27,7 @@ class ProductModel {
     this.isActive = true,
     this.isPopular = false,
     this.isInStock = true,
+    this.stockQuantity = 0, // Default to 0
     required this.sizePrices,
     required this.addOns,
     this.ingredients = const [],
@@ -34,7 +36,7 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // 1. Parse sizes list [{size_name: 'Regular', price: 12.0}] -> Map {'Regular': 12.0}
+    // 1. Parse sizes
     final Map<String, double> parsedSizes = {};
     if (json['sizes'] != null && json['sizes'] is List) {
       for (var s in json['sizes']) {
@@ -46,7 +48,7 @@ class ProductModel {
       }
     }
 
-    // 2. Parse addons list [{name: 'Bacon', price: 2.0}] -> Map {'Bacon': 2.0}
+    // 2. Parse addons
     final Map<String, double> parsedAddons = {};
     if (json['addons'] != null && json['addons'] is List) {
       for (var a in json['addons']) {
@@ -58,16 +60,15 @@ class ProductModel {
       }
     }
 
-    // 3. Format nutrition string from calories and protein
+    // 3. Nutrition facts
     final cal = json['calories']?.toString() ?? '0';
     final pro = json['protein']?.toString() ?? '0g';
     final nutrition = '$cal kcal • $pro Protein';
 
-    // 4. Handle image path (keep http/https intact, prevent duplicate assets/)
+    // 4. Image path
     String rawImage =
         (json['image_url'] ?? json['imagePath'] ?? '').toString().trim();
     String finalImagePath;
-
     if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
       finalImagePath = rawImage;
     } else if (rawImage.isNotEmpty) {
@@ -82,7 +83,7 @@ class ProductModel {
       finalImagePath = 'assets/images/imagelist1.jpg';
     }
 
-    // 5. Robust Dynamic Category Extraction
+    // 5. Category
     String parsedCategory = '';
     if (json['category'] != null) {
       if (json['category'] is Map) {
@@ -91,12 +92,9 @@ class ProductModel {
         parsedCategory = json['category'].toString().trim();
       }
     }
-
     if (parsedCategory.isEmpty && json['category_name'] != null) {
       parsedCategory = json['category_name'].toString().trim();
     }
-
-    // Intelligent fallback only if backend sends nothing
     if (parsedCategory.isEmpty) {
       final nameLower = (json['name'] ?? '').toString().toLowerCase();
       if (nameLower.contains('wing') || nameLower.contains('chicken')) {
@@ -110,8 +108,7 @@ class ProductModel {
       }
     }
 
-    // 6. Robust Boolean Parsing for active, popular, and in_stock
-    // Handles 1, true, '1', 'true', 0, false, '0', 'false'
+    // 6. Booleans & numeric stock
     bool parseBool(dynamic val, {bool defaultValue = false}) {
       if (val == null) return defaultValue;
       if (val is bool) return val;
@@ -132,15 +129,15 @@ class ProductModel {
       defaultValue: false,
     );
 
+    final int parsedStock = int.tryParse(
+          (json['stock_quantity'] ?? json['stock'] ?? 0).toString(),
+        ) ??
+        0;
+
     final rawInStock = json['is_in_stock'];
-    final bool parsedInStock = rawInStock == null ||
-        rawInStock == 1 ||
-        rawInStock == true ||
-        rawInStock == '1';
-    // final bool parsedInStock = parseBool(
-    //   json['is_in_stock'] ?? json['isInStock'] ?? json['in_stock'],
-    //   defaultValue: true,
-    // );
+    final bool parsedInStock = rawInStock == null
+        ? parsedStock > 0
+        : (rawInStock == 1 || rawInStock == true || rawInStock == '1');
 
     return ProductModel(
       id: json['id'] is int
@@ -158,6 +155,7 @@ class ProductModel {
       isActive: parsedActive,
       isPopular: parsedPopular,
       isInStock: parsedInStock,
+      stockQuantity: parsedStock,
       sizePrices: parsedSizes.isNotEmpty
           ? parsedSizes
           : {
@@ -173,7 +171,6 @@ class ProductModel {
     );
   }
 
-  // Prepares the model to be sent to Laravel via POST or PUT
   Map<String, dynamic> toJson({int? categoryId}) {
     int? cal;
     String? pro;
@@ -198,6 +195,7 @@ class ProductModel {
       'is_active': isActive ? 1 : 0,
       'is_popular': isPopular ? 1 : 0,
       'is_in_stock': isInStock ? 1 : 0,
+      'stock_quantity': stockQuantity,
       'sizes': sizePrices.entries
           .map((e) => {'size_name': e.key, 'price': e.value})
           .toList(),

@@ -17,18 +17,57 @@ class RestApi {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       };
+
+  /// POST /api/categories - Save a new category to MySQL database
+  static Future<bool> createCategory(String name) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/categories'),
+        headers: _headers,
+        body: jsonEncode({'name': name}),
+      );
+      // Status 200 or 201 indicates success
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Error in createCategory: $e');
+      return false;
+    }
+  }
+
+  /// GET /api/categories - Fetch all categories from backend
   static Future<List<dynamic>> fetchCategories() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories'),
+        headers: {'Accept': 'application/json'},
+      );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data is List ? data : (data['data'] ?? []);
       }
     } catch (e) {
-      debugPrint('Error fetching categories: $e');
+      debugPrint('Error in fetchCategories: $e');
     }
     return [];
   }
+
+  //// old
+  // static Future<List<dynamic>> fetchCategories() async {
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse('$baseUrl/categories'),
+  //       headers: {'Accept': 'application/json'},
+  //     );
+  //     if (response.statusCode == 200) {
+  //       final data = jsonDecode(response.body);
+  //       final List list = data is List ? data : (data['data'] ?? []);
+  //       return list.map((e) => Map<String, dynamic>.from(e)).toList();
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error fetching categories: $e');
+  //   }
+  //   return [];
+  // }
 
   // 1. READ (GET all products)[cite: 10]
   static Future<List<ProductModel>> fetchProducts() async {

@@ -31,7 +31,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _fatController = TextEditingController(text: '58');
   final _carbsController = TextEditingController(text: '32');
   final _ingredientInputController = TextEditingController();
-  final _newCategoryController = TextEditingController();
+  // final _newCategoryController = TextEditingController();
+  final TextEditingController _newCategoryController = TextEditingController();
 
   // Categories list
   final List<String> _categoryOptions = [
@@ -92,7 +93,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       'priceController': TextEditingController(text: '1.50'),
     },
   ];
-
   @override
   void initState() {
     super.initState();
@@ -110,7 +110,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _isInStock = p.isInStock;
       _isPopular = p.isPopular;
 
-      // Handle category matching
+      // Handle category matching for existing product
       if (p.category.isNotEmpty) {
         if (!_categoryOptions.contains(p.category)) {
           _categoryOptions.add(p.category);
@@ -155,6 +155,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
           };
         }).toList();
       }
+    }
+
+    // 2. Fetch all real categories from MySQL so all added categories appear
+    _loadBackendCategories();
+  }
+
+// Method to fetch all categories from MySQL into the dropdown list
+  Future<void> _loadBackendCategories() async {
+    try {
+      final liveCategories = await RestApi.fetchCategories();
+      if (liveCategories.isNotEmpty && mounted) {
+        setState(() {
+          for (var cat in liveCategories) {
+            String name = '';
+            if (cat is Map) {
+              name = (cat['name'] ?? '').toString().trim();
+            } else {
+              name = cat.toString().trim();
+            }
+
+            if (name.isNotEmpty && !_categoryOptions.contains(name)) {
+              _categoryOptions.add(name);
+            }
+          }
+
+          // Keep the selected category consistent
+          if (!_categoryOptions.contains(_selectedCategory)) {
+            _categoryOptions.add(_selectedCategory);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading backend categories: $e');
     }
   }
 
@@ -499,18 +532,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
-                                onPressed: () {
+                                onPressed: () async {
                                   final newCat =
                                       _newCategoryController.text.trim();
                                   if (newCat.isNotEmpty) {
-                                    setState(() {
-                                      if (!_categoryOptions.contains(newCat)) {
-                                        _categoryOptions.add(newCat);
-                                      }
-                                      _selectedCategory = newCat;
-                                      _showCreateCategory = false;
-                                    });
-                                    _newCategoryController.clear();
+                                    // 1. Save to Laravel/MySQL database
+                                    await RestApi.createCategory(newCat);
+
+                                    // 2. Add to active options list and select it
+                                    if (mounted) {
+                                      setState(() {
+                                        if (!_categoryOptions
+                                            .contains(newCat)) {
+                                          _categoryOptions.add(newCat);
+                                        }
+                                        _selectedCategory = newCat;
+                                        _showCreateCategory = false;
+                                      });
+                                      _newCategoryController.clear();
+                                    }
                                   }
                                 },
                                 icon: const Icon(Icons.check,
@@ -519,7 +559,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 12)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: maroonColor,
+                                  backgroundColor: const Color(0xFF7A1C1C),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8)),
                                 ),
@@ -628,9 +668,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               _isActive
                                   ? Icons.visibility
                                   : Icons.visibility_off,
-                              color: _isActive
-                                  ? maroonColor
-                                  : Colors.grey,
+                              color: _isActive ? maroonColor : Colors.grey,
                               size: 22,
                             ),
                             const SizedBox(width: 10),
@@ -714,7 +752,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         Row(
                           children: [
                             Icon(Icons.local_fire_department,
-                                color: _isPopular ? Colors.redAccent : Colors.grey,
+                                color:
+                                    _isPopular ? Colors.redAccent : Colors.grey,
                                 size: 22),
                             const SizedBox(width: 10),
                             Expanded(
@@ -728,7 +767,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                           color: _isPopular
                                               ? Colors.black87
                                               : Colors.grey.shade700)),
-                                  const Text('Show in home feed and recommendations',
+                                  const Text(
+                                      'Show in home feed and recommendations',
                                       style: TextStyle(
                                           fontSize: 10, color: Colors.grey)),
                                 ],
