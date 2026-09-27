@@ -6,13 +6,14 @@ class CartItem {
   final String selectedSize;
   final List<String> selectedAddOns;
   final double unitPrice;
-
+  final String? notes;
   CartItem({
     required this.product,
     this.quantity = 1,
     this.selectedSize = 'M',
     this.selectedAddOns = const [],
     required this.unitPrice,
+    this.notes,
   });
 
   double get totalPrice => unitPrice * quantity;

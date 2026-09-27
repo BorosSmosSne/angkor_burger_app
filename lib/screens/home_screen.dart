@@ -12,8 +12,10 @@ import 'package:angkor_burger_app/screens/menu_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:angkor_burger_app/screens/product_detail_screen.dart';
 import 'package:angkor_burger_app/screens/user_profile_screen.dart';
+import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:angkor_burger_app/screens/burger_menu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +28,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentBannerIndex = 0;
   int _selectedNavIndex = 0;
   final List<CartItem> _cartItems = [];
+
+  // Live products loaded from Laravel REST API
+  List<ProductModel> _loadedProducts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   String _selectedCategory = 'All';
   String _searchQuery = '';
@@ -44,6 +51,35 @@ class _HomeScreenState extends State<HomeScreen> {
     {'title': 'Chicken', 'icon': Icons.kebab_dining},
     {'title': 'Desserts', 'icon': Icons.icecream},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLiveProducts();
+  }
+
+  Future<void> _fetchLiveProducts() async {
+    try {
+      debugPrint(
+          '--> Fetching live products from: ${RestApi.baseUrl}/products');
+      final products = await RestApi.fetchProducts();
+      if (mounted) {
+        setState(() {
+          _loadedProducts = products.where((p) => p.isActive).toList();
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('--> Error fetching live products: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
 
   bool get _isFilterActive =>
       _selectedCategory != 'All' ||
@@ -71,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Filter products by selected category, search query, and price range
   List<ProductModel> get _filteredProducts {
-    final list = sampleProducts.where((p) {
+    final list = _loadedProducts.where((p) {
       final matchesCategory = _selectedCategory == 'All' ||
           _matchesCategory(p.category, _selectedCategory);
       final matchesSearch = _searchQuery.isEmpty ||
@@ -181,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            final matchingCount = sampleProducts.where((p) {
+            final matchingCount = _loadedProducts.where((p) {
               final matchesCategory = tempCategory == 'All' ||
                   _matchesCategory(p.category, tempCategory);
               final matchesSearch = _searchQuery.isEmpty ||
@@ -837,6 +873,30 @@ class _HomeScreenState extends State<HomeScreen> {
         // 1. FLOATING WHITE HEADER CONTAINER
         // ==========================================
         AngkorAppBar(
+          actions: [
+            // 🍔 Button to open Admin Catalog / Add Data
+            IconButton(
+              tooltip: 'Manage Catalog & Add Items',
+              icon: const Icon(
+                Icons.inventory_2_outlined,
+                color: AppColors.brandRed,
+                size: 22,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BurgerMenuScreen(),
+                  ),
+                ).then((_) {
+                  // Auto-refreshes your product grid when returning
+                  if (mounted) {
+                    _fetchLiveProducts();
+                  }
+                });
+              },
+            ),
+          ],
           onFavoritePressed: () {
             Navigator.push(
               context,
@@ -1180,11 +1240,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
                 const SizedBox(height: 12),
-
+                // ==========================================
+                // LIVE PRODUCT GRID / STATES
+                // ==========================================
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 50),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.brandRed,
+                      ),
+                    ),
+                  )
+                else if (_errorMessage != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 48, color: Colors.redAccent),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Failed to load products:\n$_errorMessage',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey.shade700),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              _fetchLiveProducts();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.brandRed,
+                            ),
+                            child: const Text('Try Again',
+                                style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 // ==========================================
                 // 6. PRODUCT GRID
                 // ==========================================
-                if (_filteredProducts.isEmpty)
+                else if (_filteredProducts.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40),

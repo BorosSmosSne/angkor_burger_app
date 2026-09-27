@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 import '../services/rest_api.dart';
 import 'add_product_screen.dart';
+import 'auth_screen.dart';
+import 'home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BurgerMenuScreen extends StatefulWidget {
   const BurgerMenuScreen({super.key});
@@ -22,6 +25,49 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   String _selectedCategory = 'All Items';
   String _currentSort = 'Newest';
   int _currentBottomNavIndex = 1;
+  // 1. Quick Test Login (sets the token and goes to Customer HomeScreen)
+  Future<void> _quickTestLogin() async {
+    final preferences = await SharedPreferences.getInstance();
+    const testToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4MDAwMDAwMDB9.6n4w6_uCgMbeuY7Vp_tHhUksL8Pq8wW7Fk1Z6_9_1z2';
+    await preferences.setString('angkor.pos.token', testToken);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('⚡ Quick logged in as Test Admin'),
+        duration: Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+  }
+
+  // 2. Quick Test Logout (removes the token and takes you to AuthScreen)
+  Future<void> _quickTestLogout() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove('angkor.pos.token');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logged out successfully'),
+        duration: Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const AuthScreen(initialIsSignUp: false),
+      ),
+      (route) => false,
+    );
+  }
 
   @override
   void initState() {
@@ -284,16 +330,80 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       ),
       actions: [
         IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black87),
-            onPressed: () {}),
-        const Padding(
-          padding: EdgeInsets.only(right: 14),
-          child: CircleAvatar(
+          tooltip: 'Open Customer Home Screen',
+          icon: const Icon(Icons.notifications_none, color: Colors.black87),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          },
+        ),
+        // Quick Auth & Test Menu
+        PopupMenuButton<String>(
+          tooltip: 'Auth & Testing',
+          icon: const CircleAvatar(
             radius: 16,
             backgroundColor: burgundy,
             child: Icon(Icons.person, color: Colors.white, size: 18),
           ),
+          onSelected: (value) {
+            if (value == 'home') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            } else if (value == 'login') {
+              _quickTestLogin();
+            } else if (value == 'logout') {
+              _quickTestLogout();
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'home',
+              child: Row(
+                children: [
+                  Icon(Icons.home_outlined, color: Colors.black87, size: 18),
+                  SizedBox(width: 8),
+                  Text('Open Home Screen', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'login',
+              child: Row(
+                children: [
+                  Icon(Icons.bolt, color: Colors.green, size: 18),
+                  SizedBox(width: 8),
+                  Text('Quick Test Login',
+                      style:
+                          TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout, color: Colors.red, size: 18),
+                  SizedBox(width: 8),
+                  Text('Log Out',
+                      style: TextStyle(fontSize: 13, color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
         ),
+        const SizedBox(width: 8),
+        // const Padding(
+        //   padding: EdgeInsets.only(right: 14),
+        //   child: CircleAvatar(
+        //     radius: 16,
+        //     backgroundColor: burgundy,
+        //     child: Icon(Icons.person, color: Colors.white, size: 18),
+        //   ),
+        // ),
       ],
     );
   }

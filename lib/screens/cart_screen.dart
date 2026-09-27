@@ -107,7 +107,6 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-
   void _onBottomNavTapped(int index) {
     ScaffoldMessenger.of(context).clearSnackBars();
     if (index == 0) {
@@ -437,17 +436,35 @@ class _CartScreenState extends State<CartScreen> {
           // Product Image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              item.product.imagePath,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 70,
-                height: 70,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.fastfood, color: Colors.grey),
-              ),
+            child: SizedBox(
+              width: 60,
+              height: 60,
+              child: item.product.imagePath.startsWith('http://') ||
+                      item.product.imagePath.startsWith('https://')
+                  ? Image.network(
+                      width: double.infinity,
+                      height: double.infinity,
+                      item.product.imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.fastfood,
+                            size: 28, color: Colors.grey),
+                      ),
+                    )
+                  : Image.asset(
+                      width: double.infinity,
+                      height: double.infinity,
+                      item.product.imagePath.isNotEmpty
+                          ? item.product.imagePath
+                          : 'assets/images/imagelist1.jpg',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.fastfood,
+                            size: 28, color: Colors.grey),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),

@@ -43,6 +43,9 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
+    final displayPrice = widget.product.sizePrices.isNotEmpty
+        ? widget.product.sizePrices.values.reduce((a, b) => a < b ? a : b)
+        : widget.product.price;
     return GestureDetector(
       onTap: widget.onTap,
       child: Card(
@@ -52,33 +55,46 @@ class _ProductCardState extends State<ProductCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: Clip
+            .antiAlias, // Clips the image cleanly to top-left and top-right card corners
         margin: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. REPLACED 'Expanded' WITH 'SizedBox' TO FIX THE IMAGE HEIGHT
-            SizedBox(
-              height: 180, // Fixed height for image
+            // ================= 1. FULL-BLEED IMAGE SECTION =================
+            Expanded(
+              flex: 3, // Gives proportionally more room to the image
               child: Stack(
+                fit: StackFit.expand, // Forces image to stretch edge-to-edge
                 children: [
-                  ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(12)),
-                    child: Image.asset(
-                      widget.product.imagePath,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: Icon(Icons.fastfood,
-                              size: 40, color: Colors.grey),
+                  widget.product.imagePath.startsWith('http://') ||
+                          widget.product.imagePath.startsWith('https://')
+                      ? Image.network(
+                          widget.product.imagePath,
+                          fit: BoxFit
+                              .cover, // Fills completely with zero white bars
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.fastfood,
+                                size: 40, color: Colors.grey),
+                          ),
+                        )
+                      : Image.asset(
+                          widget.product.imagePath.isNotEmpty
+                              ? widget.product.imagePath
+                              : 'assets/images/imagelist1.jpg',
+                          fit: BoxFit
+                              .cover, // Fills completely with zero white bars
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.fastfood,
+                                size: 40, color: Colors.grey),
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
+
+                  // Floating Favorite Button (Top Right)
                   Positioned(
                     top: 8,
                     right: 8,
@@ -91,14 +107,21 @@ class _ProductCardState extends State<ProductCard> {
                       },
                       child: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 4,
+                            ),
+                          ],
                         ),
                         child: Icon(
                           _isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: _isFavorite ? Colors.red : Colors.grey,
-                          size: 20,
+                          color:
+                              _isFavorite ? Colors.red : Colors.grey.shade700,
+                          size: 18,
                         ),
                       ),
                     ),
@@ -107,79 +130,69 @@ class _ProductCardState extends State<ProductCard> {
               ),
             ),
 
-            // 2. MOVED 'Expanded' HERE SO THE TEXT AREA FILLS THE REST OF THE CARD
+            // ================= 2. TITLE, RATING, PRICE =================
             Expanded(
+              flex: 2, // Compact bottom section for text details
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment
-                      .spaceBetween, // Pushes price to the bottom
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    // Title + Star Rating
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                widget.product.name,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w600),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                        Expanded(
+                          child: Text(
+                            widget.product.name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const Icon(Icons.star,
-                                color: AppColors.brandYellow, size: 14),
-                            const SizedBox(width: 2),
-                            Text(
-                              widget.product.rating.toString(),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        // Row(
-                        //   children: [
-                        //     const Icon(Icons.star,
-                        //         color: AppColors.brandYellow, size: 14),
-                        //     const SizedBox(width: 2),
-                        //     Text(
-                        //       widget.product.rating.toString(),
-                        //       style: const TextStyle(
-                        //         fontSize: 12,
-                        //         fontWeight: FontWeight.bold,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.star,
+                            color: AppColors.brandYellow, size: 14),
+                        const SizedBox(width: 2),
+                        Text(
+                          widget.product.rating.toString(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
+
+                    // Price + Add Button
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '\$${widget.product.price.toStringAsFixed(2)}',
+                          '\$${displayPrice.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 15,
                             color: AppColors.brandRed,
                           ),
                         ),
                         AnimatedButton(
                           onPressed: widget.onAddToCart ?? () {},
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(5),
                             decoration: const BoxDecoration(
-                              color: Colors.black,
+                              color: Colors.black87,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.add,
-                                color: Colors.white, size: 16),
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ],

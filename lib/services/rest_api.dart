@@ -1,17 +1,18 @@
 import 'dart:convert';
-import 'package:angkor_burger_app/models/product_model.dart';
+import 'package:flutter/foundation.dart'; // Needed for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart'; //[cite: 8, 10]
-// import '../models/burger_models.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:angkor_burger_app/models/product_model.dart';
 
 class RestApi {
-  // IP Configurations:
-  // - Android Emulator: 'http://10.0.2.2:8000/api'
-  // - Physical Device: 'http://192.168.1.X:8000/api' (your computer's IP)
-  // - Chrome / Windows: 'http://127.0.0.1:8000/api'
-  // static const String baseUrl = 'http://10.0.2.2:8000/api';
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  // Automatically switches between Chrome/Web (127.0.0.1) and Android Emulator (10.0.2.2)
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000/api';
+    }
+    return 'http://10.0.2.2:8000/api';
+  }
 
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
@@ -26,7 +27,6 @@ class RestApi {
         headers: _headers,
         body: jsonEncode({'name': name}),
       );
-      // Status 200 or 201 indicates success
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       debugPrint('Error in createCategory: $e');
@@ -51,122 +51,134 @@ class RestApi {
     return [];
   }
 
-  //// old
-  // static Future<List<dynamic>> fetchCategories() async {
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse('$baseUrl/categories'),
-  //       headers: {'Accept': 'application/json'},
-  //     );
-  //     if (response.statusCode == 200) {
-  //       final data = jsonDecode(response.body);
-  //       final List list = data is List ? data : (data['data'] ?? []);
-  //       return list.map((e) => Map<String, dynamic>.from(e)).toList();
-  //     }
-  //   } catch (e) {
-  //     debugPrint('Error fetching categories: $e');
-  //   }
-  //   return [];
-  // }
-
-  // 1. READ (GET all products)[cite: 10]
+  /// 1. READ (GET all products)
   static Future<List<ProductModel>> fetchProducts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/products'),
-      headers: _headers,
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/products'),
+        headers: _headers,
+      );
+      debugPrint('--> [RestApi] Response status: ${response.statusCode}');
 
-    if (response.statusCode == 200) {
-      //[cite: 10]
-      final List data = jsonDecode(response.body); //[cite: 8, 10]
-      return data
-          .map((json) => ProductModel.fromJson(json))
-          .toList(); //[cite: 8, 10]
-    } else {
-      throw Exception(
-          'Failed to load products: ${response.statusCode}'); //[cite: 8]
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List data = decoded is List ? decoded : (decoded['data'] ?? []);
+
+        debugPrint('--> [RestApi] Parsing ${data.length} raw JSON items...');
+        final products =
+            data.map((item) => ProductModel.fromJson(item)).toList();
+        debugPrint(
+            '--> [RestApi] Successfully parsed ${products.length} products!');
+        return products;
+      } else {
+        throw Exception('Failed to load products: ${response.statusCode}');
+      }
+    } catch (e, stack) {
+      debugPrint('Error in fetchProducts: $e');
+      debugPrint(stack.toString());
+      rethrow;
     }
   }
 
-// MULTIPART POST: Send file bytes + text fields
+  /// 2. MULTIPART POST: Send file bytes + text fields
   static Future<bool> uploadProductWithImage({
     required Map<String, dynamic> fields,
     XFile? imageFile,
   }) async {
-    final uri = Uri.parse('$baseUrl/products');
-    final request = http.MultipartRequest('POST', uri);
+    try {
+      final uri = Uri.parse('$baseUrl/products');
+      final request = http.MultipartRequest('POST', uri);
 
-    request.headers['Accept'] = 'application/json';
+      request.headers['Accept'] = 'application/json';
 
-    // Add text fields
-    fields.forEach((key, value) {
-      request.fields[key] = value.toString();
-    });
+      // Add text fields
+      fields.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
 
-    // Add the image file bytes
-    if (imageFile != null) {
-      final bytes = await imageFile.readAsBytes();
-      final multipartFile = http.MultipartFile.fromBytes(
-        'image',
-        bytes,
-        filename: imageFile.name,
-      );
-      request.files.add(multipartFile);
+      // Add the image file bytes
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        final multipartFile = http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: imageFile.name,
+        );
+        request.files.add(multipartFile);
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Error in uploadProductWithImage: $e');
+      return false;
     }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    return response.statusCode == 201;
   }
 
-  // 2. CREATE (POST new product)[cite: 10]
+  /// 3. CREATE via JSON (fallback if no image file)
   static Future<bool> createProduct(Map<String, dynamic> productData) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/products'),
-      headers: _headers,
-      body: jsonEncode(productData),
-    );
-    return response.statusCode == 201; //[cite: 10]
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/products'),
+        headers: _headers,
+        body: jsonEncode(productData),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      debugPrint('Error in createProduct: $e');
+      return false;
+    }
   }
 
-  // 3.Update with optional image file upload
+  /// 4. UPDATE with optional image file upload
   static Future<bool> updateProductWithImage({
     required int id,
     required Map<String, dynamic> fields,
     XFile? imageFile,
   }) async {
-    // Laravel handles PUT requests with files best using POST with _method = PUT
-    final uri = Uri.parse('$baseUrl/products/$id');
-    final request = http.MultipartRequest('POST', uri);
+    try {
+      // Laravel handles PUT requests with files best using POST with _method = PUT
+      final uri = Uri.parse('$baseUrl/products/$id');
+      final request = http.MultipartRequest('POST', uri);
 
-    request.headers['Accept'] = 'application/json';
-    request.fields['_method'] = 'PUT'; // Method spoofing for Laravel
+      request.headers['Accept'] = 'application/json';
+      request.fields['_method'] = 'PUT'; // Method spoofing for Laravel
 
-    fields.forEach((key, value) {
-      request.fields[key] = value.toString();
-    });
+      fields.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
 
-    if (imageFile != null) {
-      final bytes = await imageFile.readAsBytes();
-      final multipartFile = http.MultipartFile.fromBytes(
-        'image',
-        bytes,
-        filename: imageFile.name,
-      );
-      request.files.add(multipartFile);
+      if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        final multipartFile = http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: imageFile.name,
+        );
+        request.files.add(multipartFile);
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error in updateProductWithImage: $e');
+      return false;
     }
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-    return response.statusCode == 200;
   }
 
-  // 4. DELETE (DELETE product by ID)[cite: 10]
+  /// 5. DELETE product by ID
   static Future<bool> deleteProduct(int id) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/products/$id'),
-      headers: _headers,
-    );
-    return response.statusCode == 200; //[cite: 10]
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/products/$id'),
+        headers: _headers,
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error in deleteProduct: $e');
+      return false;
+    }
   }
 }
