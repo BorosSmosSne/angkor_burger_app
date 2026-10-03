@@ -41,6 +41,9 @@ class WelcomeScreen extends StatelessWidget {
                 'assets/images/AngkorWat_victor.png',
                 width: 270,
                 fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(
+                  height: 50,
+                ),
               ),
             ),
           ),
@@ -93,6 +96,12 @@ class WelcomeScreen extends StatelessWidget {
                               height: 250,
                               width: 250,
                               fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                Icons.fastfood_rounded,
+                                size: 100,
+                                color: _brandRed,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),

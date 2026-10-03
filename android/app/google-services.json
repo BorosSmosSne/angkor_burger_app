@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1059156608593",
+    "project_id": "pos-sv9",
+    "storage_bucket": "pos-sv9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1059156608593:android:39137c82d1475d9dc29a70",
+        "android_client_info": {
+          "package_name": "com.example.angkor_burger_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1059156608593-ieeqk0e2hm6jsmsqc3uh1373mn2ih00v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcGY1dYuRXPoEeJvvhtl-hxE0SiYyTR8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1059156608593-ieeqk0e2hm6jsmsqc3uh1373mn2ih00v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1059156608593-3roafbu8mlpuuqr2fnmh91683bptcmha.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.angkorBurgerApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

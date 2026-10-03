@@ -45,9 +45,15 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    final SharedPreferences preferences =
-        await SharedPreferences.getInstance();
-    final String? token = preferences.getString('angkor.pos.token');
+    String? token;
+    try {
+      final SharedPreferences preferences =
+          await SharedPreferences.getInstance();
+      token = preferences.getString('angkor.pos.token');
+    } catch (e) {
+      debugPrint('Error reading SharedPreferences: $e');
+    }
+    
     final bool hasValidToken = token != null && token.trim().isNotEmpty;
 
     await Future.delayed(const Duration(milliseconds: 1800));
@@ -64,8 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
           transitionDuration: const Duration(milliseconds: 800),
           pageBuilder: (context, animation, secondaryAnimation) =>
               const WelcomeScreen(),
-          transitionsBuilder:
-              (context, animation, secondaryAnimation, child) {
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: CurvedAnimation(
                 parent: animation,
