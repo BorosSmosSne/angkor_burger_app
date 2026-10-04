@@ -4,8 +4,10 @@ import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/helpers/user_avatar.dart';
 import 'package:angkor_burger_app/models/user_profile_model.dart';
+import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -235,8 +237,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     color: Colors.red.shade50,
                     shape: BoxShape.circle,
                   ),
-                  child:
-                      const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                  child: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 20),
                 ),
                 title: const Text(
                   'Remove Current Photo',
@@ -303,7 +305,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -311,17 +313,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final bool isImageCleared =
         _selectedImagePath == null && _selectedImageBytes == null;
 
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final email = _emailController.text.trim();
+    final address = _addressController.text.trim();
+
     UserProfileManager.updateProfile(
-      name: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
-      address: _addressController.text.trim(),
+      name: name,
+      phone: phone,
+      email: email,
+      address: address,
       gender: _selectedGender,
       dateOfBirth: _dateOfBirth,
       avatarEmoji: _selectedAvatarEmoji,
       profileImagePath: _selectedImagePath,
       profileImageBytes: _selectedImageBytes,
       clearProfileImage: isImageCleared,
+    );
+
+    await RestApi.updateUserProfile(
+      name: name,
+      phone: phone,
+      email: email,
+      address: address,
+      gender: _selectedGender,
+      dateOfBirth: _dateOfBirth,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -458,12 +474,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             label: 'Phone Number',
                             controller: _phoneController,
                             icon: Icons.phone_outlined,
-                            hint: '+855 12 345 678',
+                            hint: '012345678',
                             keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
                             validator: (val) {
                               if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your phone number';
                               }
+                              final trimmed = val.trim();
+
+                              final phoneRegex = RegExp(r'^0[0-9]{7,8}$');
+
+                              if (!phoneRegex.hasMatch(trimmed)) {
+                                return 'Phone number must start with 0 and be 8-9 digits (e.g. 012345678)';
+                              }
+
                               return null;
                             },
                           ),
@@ -746,8 +774,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.brandRed,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -762,7 +790,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           _selectedImageBytes = null;
                         });
                       },
-                      icon: const Icon(Icons.close, size: 14, color: Colors.red),
+                      icon:
+                          const Icon(Icons.close, size: 14, color: Colors.red),
                       label: const Text(
                         'Remove',
                         style: TextStyle(
@@ -773,8 +802,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.red),
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -850,6 +879,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required IconData icon,
     required String hint,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {

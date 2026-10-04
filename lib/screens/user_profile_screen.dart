@@ -13,6 +13,7 @@ import 'package:angkor_burger_app/screens/menu_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final List<CartItem>? cartItems;
@@ -47,6 +48,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   void initState() {
     super.initState();
     _cartItems = widget.cartItems ?? [];
+    UserProfileManager
+        .initFromFirebase(); // Initialize user profile from Firebase
+  }
+
+  void _syncFirebaseUser() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final displayName =
+          (user.displayName != null && user.displayName!.isNotEmpty)
+              ? user.displayName!
+              : (user.email?.split('@').first ?? 'User');
+      final email = user.email ?? '';
+      final phone = user.phoneNumber ?? '';
+
+      UserProfileManager.updateProfile(
+        name: displayName,
+        email: email,
+        phone: phone,
+      );
+    }
   }
 
   int get _totalCartItems {
@@ -468,8 +489,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _handleLogout() async {
-    final SharedPreferences preferences =
-        await SharedPreferences.getInstance();
+    final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.remove('angkor.pos.token');
 
     if (!mounted) return;
@@ -610,7 +630,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             icon: Icons.person_outline,
                             title: 'Personal Information',
                             subtitle:
-                                '${profile.name} • ${profile.phone}',
+                                '${profile.name} • ${profile.phone.trim().isNotEmpty ? profile.phone : 'No phone number'}',
                             onTap: _navigateToEditProfile,
                           ),
                           _buildSettingsTile(
@@ -771,15 +791,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    profile.phone,
-                    style:
-                        TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    profile.phone.trim().isNotEmpty
+                        ? profile.phone
+                        : 'Add phone number',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: profile.phone.trim().isNotEmpty
+                            ? Colors.grey.shade600
+                            : Colors.orange.shade800,
+                        fontStyle: profile.phone.trim().isNotEmpty
+                            ? FontStyle.normal
+                            : FontStyle.italic),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     profile.email,
-                    style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
               ),

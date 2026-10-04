@@ -19,6 +19,35 @@ class RestApi {
         'Accept': 'application/json',
       };
 
+  /// PUT /api/user/profile - Save updated profile details to Laravel MySQL
+  static Future<bool> updateUserProfile({
+    required String email,
+    required String name,
+    required String phone,
+    required String address,
+    String? gender,
+    String? dateOfBirth,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/user/profile'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email,
+          'name': name,
+          'phone': phone,
+          'address': address,
+          'gender': gender,
+          'date_of_birth': dateOfBirth,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error updating profile in Laravel: $e');
+      return false;
+    }
+  }
+
   /// POST /api/categories - Save a new category to MySQL database
   static Future<bool> createCategory(String name) async {
     try {
@@ -32,6 +61,24 @@ class RestApi {
       debugPrint('Error in createCategory: $e');
       return false;
     }
+  }
+
+  /// GET /api/user/profile?email=...
+  static Future<Map<String, dynamic>?> fetchUserProfile(String email) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/profile?email=${Uri.encodeComponent(email)}'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is Map<String, dynamic> ? (data['user'] ?? data) : null;
+      }
+    } catch (e) {
+      debugPrint('Error fetching profile from Laravel: $e');
+    }
+    return null;
   }
 
   /// GET /api/categories - Fetch all categories from backend

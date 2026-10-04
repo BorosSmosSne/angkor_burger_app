@@ -1,6 +1,8 @@
+import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/animated_button.dart';
 import 'package:angkor_burger_app/models/user_model.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
+import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -346,13 +348,33 @@ class _AuthScreenState extends State<AuthScreen>
           await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
       // 3. Obtain Firebase ID token
+      final user = userCredential.user;
       final idToken = await userCredential.user?.getIdToken();
-      if (idToken != null) {
+
+      if (user != null && idToken != null) {
+        final email = user.email ?? '';
+        final name = user.displayName?.trim().isNotEmpty == true
+            ? user.displayName!.trim()
+            : 'Google User';
+        final phone = user.phoneNumber ?? '';
+
+        // 3. Save the auth credentials locally
         await saveCredentials(User(
           token: idToken,
-          email: userCredential.user?.email ?? '',
-          name: userCredential.user?.displayName ?? '',
+          // email: userCredential.user?.email ?? '',
+          // name: userCredential.user?.displayName ?? 'Google User',
+          email: email,
+          name: name,
+          phone: phone,
         ));
+
+        // 4. Persist to Laravel MySQL database
+        await RestApi.updateUserProfile(
+          email: email,
+          name: name,
+          phone: phone,
+          address: '',
+        );
       }
 
       // 4. Navigate to HomeScreen
@@ -488,16 +510,37 @@ class _AuthScreenState extends State<AuthScreen>
     try {
       final userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
-      // Save user profile display name
-      await userCredential.user?.updateDisplayName(name);
+      // 1. Save display name to firebase
+      final fullName = _nameController.text.trim();
+      if (fullName.isNotEmpty) {
+        await userCredential.user?.updateDisplayName(fullName);
+        await userCredential.user?.reload(); // Refresh user data
+      }
+
+      await RestApi.updateUserProfile(
+          email: _emailController.text.trim(),
+          name: fullName.isNotEmpty ? fullName : 'User',
+          phone: '',
+          address: '');
+
+      // 2. Immediately update the profile manager
+      UserProfileManager.updateProfile(
+        name: fullName.isNotEmpty ? fullName : 'User',
+        email: _emailController.text.trim(),
+        phone: '',
+        address: '',
+      );
 
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
-        await saveCredentials(User(token: idToken, email: email, name: name));
+        await saveCredentials(User(
+            token: idToken,
+            name: fullName,
+            email: userCredential.user?.email ?? ''));
       }
 
       if (mounted) {
