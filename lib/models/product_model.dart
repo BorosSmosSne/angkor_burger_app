@@ -190,10 +190,18 @@ class ProductModel {
     // );
     // 4. Safe Image Path
     String rawImage =
-        json['image_url'] ?? json['imagePath'] ?? json['image'] ?? '';
+        (json['image_url'] ?? json['imagePath'] ?? json['image'] ?? '')
+            .toString()
+            .trim();
+
     String finalImage;
     if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
-      finalImage = rawImage;
+      // Android emulator maps 10.0.2.2 to the PC host's localhost (127.0.0.1)
+      rawImage = rawImage
+          .replaceAll('127.0.0.1', '10.0.2.2')
+          .replaceAll('localhost', '10.0.2.2');
+
+      finalImage = Uri.encodeFull(rawImage);
     } else if (rawImage.isNotEmpty) {
       finalImage =
           rawImage.startsWith('assets/') ? rawImage : 'assets/$rawImage';

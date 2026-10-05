@@ -5,9 +5,11 @@ import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/checkout_model.dart';
 import 'package:angkor_burger_app/models/customer_info_model.dart';
 import 'package:angkor_burger_app/models/order_model.dart';
+import 'package:angkor_burger_app/screens/aba_payway_webview_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:angkor_burger_app/screens/khqr_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem>? cartItems;
@@ -121,9 +123,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-
-
-  void _processOrder() {
+  void _processOrder() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -150,6 +150,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
       return;
+    }
+
+// CHECK IF PAYMENT METHOD IS ABA / KHQR
+    final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
+        _selectedPayment.toLowerCase().contains('khqr');
+
+    // if (isAbaPayment) {
+    //   // 1. Generate unique tran_id
+    //   final tranId = '${DateTime.now().millisecondsSinceEpoch}';
+
+    //   // 2. Open KHQR Screen (use your mock string or Laravel API result)
+    //   final paymentResult = await Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => KhqrPaymentScreen(
+    //         // Replace with real qr_string when your Laravel backend is live
+    //         qrString: 'https://payway.com.kh/mock-payment-test-string',
+    //         tranId: tranId,
+    //         // 10.0.2.2 for Android Emulator, localhost for iOS simulator, or your local LAN IP
+    //         // phpBaseUrl: 'http://10.0.2.2:8000/api',
+    //         phpBaseUrl: 'http://127.0.0.1:8000/api',
+    //         amount: _calculatedTotal,
+    //         currency: 'USD',
+    //         merchantName: 'Angkor Burger',
+    //       ),
+    //     ),
+    //   );
+
+    //   // If user cancelled, closed the screen, or payment failed
+    //   if (paymentResult == null) {
+    //     if (mounted) {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         const SnackBar(
+    //           content: Text('Payment cancelled or incomplete.'),
+    //           backgroundColor: Colors.orange,
+    //         ),
+    //       );
+    //     }
+    //     return;
+    //   }
+    // }
+    // Inside CheckoutScreen._processOrder()
+    if (isAbaPayment) {
+      // 1. Generate unique tran_id
+      final tranId = '${DateTime.now().millisecondsSinceEpoch}';
+
+      // 2. Open Mock KHQR Screen
+      final paymentSuccess = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AbaPaywayWebViewScreen(
+            shippingAddress: _addressController.text.trim(),
+            apiBaseUrl:
+                'http://10.0.2.2:8000/api', // Must be 10.0.2.2 for Android Emulator
+            cartItems: widget.cartItems ?? [],
+          ),
+        ),
+      );
+
+      if (paymentSuccess != true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment cancelled or incomplete.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
     }
 
     // Build the CustomerInfoModel & CheckoutModel

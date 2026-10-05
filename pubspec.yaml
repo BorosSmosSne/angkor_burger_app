@@ -14,10 +14,14 @@ dependencies:
     sdk: flutter
   image_picker: ^1.2.3
   shared_preferences: ^2.5.5
-  http: ^1.2.0
+  http: ^1.6.0
   firebase_core: ^4.15.0
   firebase_auth: ^6.7.0
   google_sign_in: ^7.2.0
+  qr_flutter: ^4.1.0
+  webview_flutter: ^4.14.1
+  dart_payway: ^1.0.0
+  webview_flutter_web: ^0.2.3+4
 
 dev_dependencies:
   flutter_test:
