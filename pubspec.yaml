@@ -23,6 +23,7 @@ dependencies:
   dart_payway: ^1.0.7
   get: ^4.7.3
   cached_network_image: ^3.4.1
+  flutter_slidable: ^4.0.3
 
 dev_dependencies:
   flutter_test:

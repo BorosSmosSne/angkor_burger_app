@@ -70,6 +70,61 @@ class RestApi {
     }
   }
 
+// Update staff info or reset password
+  static Future<Map<String, dynamic>> updateStaffUser({
+    required int id,
+    required String name,
+    required String email,
+    required String phone,
+    String? newPassword,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {
+        'name': name,
+        'email': email,
+        'phone': phone,
+      };
+      if (newPassword != null && newPassword.trim().isNotEmpty) {
+        body['password'] = newPassword.trim();
+      }
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/staff/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Staff updated successfully!'};
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to update staff'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+// Delete staff account
+  static Future<bool> deleteStaffUser(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/admin/staff/$id'),
+        headers: {'Accept': 'application/json'},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error deleting staff: $e');
+      return false;
+    }
+  }
+
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
