@@ -4,19 +4,22 @@ class User {
   final String? email;
   final String? name;
   final String? phone;
+  final String role;
 
   User({
     this.token,
     this.email,
     this.name,
     this.phone,
+    this.role = 'customer',
   });
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       token: json['token'],
       email: json['email'],
       name: json['name'],
-      phone: json['phone'], // 👈 3. Add to fromJson
+      phone: json['phone'],
+      role: json['role'] ?? 'customer',
     );
   }
 
@@ -25,7 +28,8 @@ class User {
       'token': token,
       'email': email,
       'name': name,
-      'phone': phone, // 👈 4. Add to toJson
+      'phone': phone,
+      'role': role,
     };
   }
 }

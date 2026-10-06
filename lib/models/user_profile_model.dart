@@ -13,6 +13,7 @@ class UserProfileModel {
   final Uint8List? profileImageBytes;
   final int rewardPoints;
   final String membershipTier;
+  final String role;
 
   UserProfileModel({
     required this.name,
@@ -26,6 +27,7 @@ class UserProfileModel {
     this.profileImageBytes,
     this.rewardPoints = 150,
     this.membershipTier = 'Gold Member',
+    this.role = 'customer',
   });
 
   UserProfileModel copyWith({
@@ -41,6 +43,7 @@ class UserProfileModel {
     bool clearProfileImage = false,
     int? rewardPoints,
     String? membershipTier,
+    String? role,
   }) {
     return UserProfileModel(
       name: name ?? this.name,
@@ -58,6 +61,7 @@ class UserProfileModel {
           : (profileImageBytes ?? this.profileImageBytes),
       rewardPoints: rewardPoints ?? this.rewardPoints,
       membershipTier: membershipTier ?? this.membershipTier,
+      role: role ?? this.role,
     );
   }
 }

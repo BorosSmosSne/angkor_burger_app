@@ -492,6 +492,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.remove('angkor.pos.token');
 
+    await UserProfileManager.reset();
+    // sign out from firebase Auth as well
+    await FirebaseAuth.instance.signOut();
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).clearSnackBars();

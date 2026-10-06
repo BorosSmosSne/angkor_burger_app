@@ -14,6 +14,62 @@ class RestApi {
     return 'http://10.0.2.2:8000/api';
   }
 
+// Fetch all staff members
+  static Future<List<dynamic>> fetchStaffMembers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/staff'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching staff: $e');
+    }
+    return [];
+  }
+
+// Create a staff user
+  static Future<Map<String, dynamic>> createStaffUser({
+    required String name,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/create-staff'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'password': password,
+        }),
+      );
+
+      debugPrint('Create Staff Status: ${response.statusCode}');
+      debugPrint('Create Staff Body: ${response.body}');
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {'success': true, 'message': 'Staff added successfully!'};
+      } else {
+        // Return the specific Laravel validation message
+        final errorMsg = data['message'] ?? 'Failed to add staff.';
+        return {'success': false, 'message': errorMsg};
+      }
+    } catch (e) {
+      debugPrint('Error creating staff: $e');
+      return {'success': false, 'message': 'Network/Connection error: $e'};
+    }
+  }
+
   static Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

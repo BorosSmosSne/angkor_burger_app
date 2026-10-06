@@ -1,11 +1,13 @@
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/data/dummy_data.dart';
 import 'package:angkor_burger_app/data/favorites_manager.dart';
+import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/helpers/custom_bottom_nav_bar.dart';
 import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
+import 'package:angkor_burger_app/models/user_profile_model.dart';
 import 'package:angkor_burger_app/screens/cart_screen.dart';
 import 'package:angkor_burger_app/screens/favorites_screen.dart';
 import 'package:angkor_burger_app/screens/menu_screen.dart';
@@ -872,48 +874,83 @@ class _HomeScreenState extends State<HomeScreen> {
         // ==========================================
         // 1. FLOATING WHITE HEADER CONTAINER
         // ==========================================
-        AngkorAppBar(
-          actions: [
-            // 🍔 Button to open Admin Catalog / Add Data
-            IconButton(
-              tooltip: 'Manage Catalog & Add Items',
-              icon: const Icon(
-                Icons.inventory_2_outlined,
-                color: AppColors.brandRed,
-                size: 22,
-              ),
-              onPressed: () {
+        
+        ValueListenableBuilder<UserProfileModel>(
+          valueListenable: UserProfileManager.profileNotifier,
+          builder: (context, profile, _) {
+            final bool isAdmin = profile.role.toLowerCase() == 'admin';
+            return AngkorAppBar(
+              actions: [
+                // 1. ADMIN ONLY: Inventory / Manage Backend Button
+                if (UserProfileManager.isAdmin)
+                  IconButton(
+                    tooltip: 'Manage Catalog (Admin)',
+                    icon: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: Color(0xFF7A1C1C),
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const BurgerMenuScreen()),
+                      );
+                    },
+                  )
+                // 2. CUSTOMER & STAFF: Notification Bell / Ringing Alert
+                else ...[
+                  IconButton(
+                    tooltip: 'Notifications',
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No new notifications'),
+                          duration: Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  // Optional: Add Favorites Heart Icon
+                  IconButton(
+                    tooltip: 'Favorites',
+                    icon: const Icon(
+                      Icons.favorite_border_rounded,
+                      color: Color(0xFF7A1C1C),
+                      size: 22,
+                    ),
+                    onPressed: () {
+                      // Your onFavoritePressed handler or open FavoritesScreen
+                    },
+                  ),
+                ],
+                const SizedBox(width: 8),
+              ],
+              onFavoritePressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const BurgerMenuScreen(),
+                    builder: (context) => FavoritesScreen(
+                      cartItems: _cartItems,
+                      onAddToCart: _addToCart,
+                      onUpdateCartQuantity: _updateCartQuantity,
+                      onRemoveCartItem: _removeFromCart,
+                      onClearCart: _clearCart,
+                      onNavigateToTab: _onBottomNavTapped,
+                    ),
                   ),
                 ).then((_) {
-                  // Auto-refreshes your product grid when returning
-                  if (mounted) {
-                    _fetchLiveProducts();
-                  }
+                  if (mounted) setState(() {});
                 });
               },
-            ),
-          ],
-          onFavoritePressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FavoritesScreen(
-                  cartItems: _cartItems,
-                  onAddToCart: _addToCart,
-                  onUpdateCartQuantity: _updateCartQuantity,
-                  onRemoveCartItem: _removeFromCart,
-                  onClearCart: _clearCart,
-                  onNavigateToTab: _onBottomNavTapped,
-                ),
-              ),
-            ).then((_) {
-              if (mounted) setState(() {});
-            });
-          },
+            );
+          }
         ),
 
         // Scrollable Body Content

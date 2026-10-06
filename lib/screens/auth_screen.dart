@@ -1,6 +1,7 @@
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/animated_button.dart';
 import 'package:angkor_burger_app/models/user_model.dart';
+import 'package:angkor_burger_app/screens/burger_menu_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -399,12 +400,14 @@ class _AuthScreenState extends State<AuthScreen>
   Future<void> login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+
     if (email.isEmpty || password.isEmpty) {
       _showErrorDialog('Please enter your email and password.');
       return;
     }
 
     setState(() => _isLoading = true);
+
     try {
       // 1. Authenticate user with Firebase Auth
       final userCredential =
@@ -413,16 +416,46 @@ class _AuthScreenState extends State<AuthScreen>
         password: password,
       );
 
-      // 2. Get the Firebase ID token (JWT)
+      // 2. Obtain & save the Firebase ID token locally
       final idToken = await userCredential.user?.getIdToken();
-
-      // 3. Save the token to local storage using your existing helper
       if (idToken != null) {
         await saveCredentials(User(token: idToken, email: email));
       }
 
-      // 4. Navigate to HomeScreen on success
-      if (mounted) {
+      // 3. Fetch user profile & assigned role from Laravel MySQL
+      final backendUser = await RestApi.fetchUserProfile(email);
+      final String role =
+          backendUser?['role']?.toString().toLowerCase() ?? 'customer';
+
+      // 4. Cache role and update active profile state
+      await UserProfileManager.saveUserRole(role);
+      UserProfileManager.updateProfile(
+        name:
+            backendUser?['name'] ?? userCredential.user?.displayName ?? 'User',
+        email: email,
+        phone: backendUser?['phone'] ?? userCredential.user?.phoneNumber ?? '',
+        role: role,
+      );
+
+      if (!mounted) return;
+
+      // 5. Route to screen based on role
+      if (role == 'admin') {
+        // Admin goes to BurgerMenuScreen (POS backend) with full access
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+          (route) => false,
+        );
+      } else if (role == 'staff') {
+        // Staff goes to BurgerMenuScreen (Stock/Inventory mode)
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+          (route) => false,
+        );
+      } else {
+        // Customer goes strictly to customer ordering view
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),

@@ -1,3 +1,6 @@
+import 'package:angkor_burger_app/data/user_profile_manager.dart';
+import 'package:angkor_burger_app/screens/staff_management_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 import '../services/rest_api.dart';
@@ -5,6 +8,7 @@ import 'add_product_screen.dart';
 import 'auth_screen.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BurgerMenuScreen extends StatefulWidget {
   const BurgerMenuScreen({super.key});
@@ -51,6 +55,8 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   Future<void> _quickTestLogout() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove('angkor.pos.token');
+
+    await UserProfileManager.reset();
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -329,6 +335,20 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         ],
       ),
       actions: [
+        // 1. Staff Management button (Visible to ADMIN ONLY)
+        if (UserProfileManager.isAdmin)
+          IconButton(
+            tooltip: 'Staff Management',
+            icon: const Icon(Icons.badge_outlined, color: burgundy),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StaffManagementScreen(),
+                ),
+              );
+            },
+          ),
         IconButton(
           tooltip: 'Open Customer Home Screen',
           icon: const Icon(Icons.notifications_none, color: Colors.black87),
@@ -339,6 +359,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
             );
           },
         ),
+
         // Quick Auth & Test Menu
         PopupMenuButton<String>(
           tooltip: 'Auth & Testing',
@@ -352,6 +373,12 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            } else if (value == 'staff') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const StaffManagementScreen()),
               );
             } else if (value == 'login') {
               _quickTestLogin();
@@ -370,6 +397,17 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                 ],
               ),
             ),
+            if (UserProfileManager.isAdmin)
+              const PopupMenuItem(
+                value: 'staff',
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline, color: Colors.black87, size: 18),
+                    SizedBox(width: 8),
+                    Text('Staff Management', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
             const PopupMenuItem(
               value: 'login',
               child: Row(
@@ -989,21 +1027,75 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
-  Widget _buildBurgerImage(String path) {
-    final clean = path.trim();
+  // Widget _buildBurgerImage(String path) {
+  //   final clean = path.trim();
 
+  //   if (clean.startsWith('http://') || clean.startsWith('https://')) {
+  //     final safeUrl = Uri.encodeFull(clean);
+  //     return Image.network(
+  //       safeUrl,
+  //       fit: BoxFit.cover,
+  //       errorBuilder: (_, __, ___) => const CircleAvatar(
+  //         backgroundColor: Color(0xFFFFECB3),
+  //         child: Icon(Icons.lunch_dining, color: Colors.brown, size: 20),
+  //       ),
+  //     );
+  //   }
+
+  //   String assetPath = clean;
+  //   if (assetPath.startsWith('assets/assets/')) {
+  //     assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
+  //   } else if (!assetPath.startsWith('assets/')) {
+  //     assetPath = 'assets/$assetPath';
+  //   }
+
+  //   if (assetPath.contains('burger.png') ||
+  //       assetPath.contains('wings.png') ||
+  //       assetPath.isEmpty) {
+  //     assetPath = 'assets/images/imagelist1.jpg';
+  //   }
+
+  //   return Image.asset(
+  //     assetPath,
+  //     fit: BoxFit.cover,
+  //     errorBuilder: (_, __, ___) =>
+  //         Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
+  //   );
+  // }
+  Widget _buildBurgerImage(String path) {
+    String clean = path.trim();
+
+    // 1. Network image from Laravel server
     if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      // Map localhost/127.0.0.1 to 10.0.2.2 on Android emulator
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        clean = clean
+            .replaceAll('127.0.0.1', '10.0.2.2')
+            .replaceAll('localhost', '10.0.2.2');
+      }
+
       final safeUrl = Uri.encodeFull(clean);
-      return Image.network(
-        safeUrl,
+
+      return CachedNetworkImage(
+        imageUrl: safeUrl,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const CircleAvatar(
-          backgroundColor: Color(0xFFFFECB3),
-          child: Icon(Icons.lunch_dining, color: Colors.brown, size: 20),
+        fadeInDuration: const Duration(milliseconds: 200),
+        fadeOutDuration: const Duration(milliseconds: 100),
+        // Clean, instant soft placeholder instead of a distracting spinner
+        placeholder: (context, url) => Container(
+          color: const Color(0xFFFDEEEC),
+          child: const Center(
+            child: Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22),
+          ),
+        ),
+        errorWidget: (context, url, error) => Image.asset(
+          'assets/images/imagelist1.jpg',
+          fit: BoxFit.cover,
         ),
       );
     }
 
+    // 2. Local Asset
     String assetPath = clean;
     if (assetPath.startsWith('assets/assets/')) {
       assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
@@ -1020,8 +1112,10 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     return Image.asset(
       assetPath,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) =>
-          Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
+      errorBuilder: (_, __, ___) => Image.asset(
+        'assets/images/imagelist1.jpg',
+        fit: BoxFit.cover,
+      ),
     );
   }
 
