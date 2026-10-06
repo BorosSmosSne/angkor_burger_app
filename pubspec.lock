@@ -269,6 +269,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
+  get:
+    dependency: "direct main"
+    description:
+      name: get
+      sha256: "5ed34a7925b85336e15d472cc4cfe7d9ebf4ab8e8b9f688585bf6b50f4c3d79a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.7.3"
   google_identity_services_web:
     dependency: transitive
     description:
@@ -730,14 +738,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.15.1"
-  webview_flutter_web:
-    dependency: "direct main"
-    description:
-      name: webview_flutter_web
-      sha256: "18a7ccc1c31dd9a5c759a1b7217a2a1e04bd8f65712714a4070bfac19a23ca9e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.3+4"
   webview_flutter_wkwebview:
     dependency: transitive
     description:

@@ -1,3 +1,4 @@
+import 'package:angkor_burger_app/checkout/views/checkout_view.dart';
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
@@ -153,8 +154,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
 
 // CHECK IF PAYMENT METHOD IS ABA / KHQR
-    final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
-        _selectedPayment.toLowerCase().contains('khqr');
+    // final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
+    //     _selectedPayment.toLowerCase().contains('khqr');
 
     // if (isAbaPayment) {
     //   // 1. Generate unique tran_id
@@ -192,23 +193,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     //   }
     // }
     // Inside CheckoutScreen._processOrder()
-    if (isAbaPayment) {
-      // 1. Generate unique tran_id
-      final tranId = '${DateTime.now().millisecondsSinceEpoch}';
 
-      // 2. Open Mock KHQR Screen
+// CHECK IF PAYMENT METHOD IS ABA / KHQR
+    final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
+        _selectedPayment.toLowerCase().contains('khqr');
+
+    if (isAbaPayment) {
+      // Open teacher's CheckoutView with real cart items and total amount
       final paymentSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
-          builder: (context) => AbaPaywayWebViewScreen(
-            shippingAddress: _addressController.text.trim(),
-            apiBaseUrl:
-                'http://10.0.2.2:8000/api', // Must be 10.0.2.2 for Android Emulator
+          builder: (context) => CheckoutView(
+            amountUsd: _calculatedTotal,
             cartItems: widget.cartItems ?? [],
           ),
         ),
       );
 
+      // If user closed the screen without paying, stop here
       if (paymentSuccess != true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +223,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
     }
-
     // Build the CustomerInfoModel & CheckoutModel
     final customerInfo = CustomerInfoModel(
       fullName: _nameController.text.trim(),
