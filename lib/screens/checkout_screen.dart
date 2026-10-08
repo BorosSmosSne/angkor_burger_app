@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 import 'package:angkor_burger_app/checkout/views/checkout_view.dart';
+import 'package:angkor_burger_app/constant.dart';
 import 'package:angkor_burger_app/core/contants.dart';
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
@@ -157,91 +161,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-// CHECK IF PAYMENT METHOD IS ABA / KHQR
-    // final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
-    //     _selectedPayment.toLowerCase().contains('khqr');
-
-    // if (isAbaPayment) {
-    //   // 1. Generate unique tran_id
-    //   final tranId = '${DateTime.now().millisecondsSinceEpoch}';
-
-    //   // 2. Open KHQR Screen (use your mock string or Laravel API result)
-    //   final paymentResult = await Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => KhqrPaymentScreen(
-    //         // Replace with real qr_string when your Laravel backend is live
-    //         qrString: 'https://payway.com.kh/mock-payment-test-string',
-    //         tranId: tranId,
-    //         // 10.0.2.2 for Android Emulator, localhost for iOS simulator, or your local LAN IP
-    //         // phpBaseUrl: 'http://10.0.2.2:8000/api',
-    //         phpBaseUrl: 'http://127.0.0.1:8000/api',
-    //         amount: _calculatedTotal,
-    //         currency: 'USD',
-    //         merchantName: 'Angkor Burger',
-    //       ),
-    //     ),
-    //   );
-
-    //   // If user cancelled, closed the screen, or payment failed
-    //   if (paymentResult == null) {
-    //     if (mounted) {
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         const SnackBar(
-    //           content: Text('Payment cancelled or incomplete.'),
-    //           backgroundColor: Colors.orange,
-    //         ),
-    //       );
-    //     }
-    //     return;
-    //   }
-    // }
-    // Inside CheckoutScreen._processOrder()
-
-// CHECK IF PAYMENT METHOD IS ABA / KHQR
-    // final selected = _selectedPayment.toLowerCase();
-    // final isOnlinePayment = selected.contains('aba') ||
-    //     selected.contains('khqr') ||
-    //     selected.contains('card') ||
-    //     selected.contains('visa');
-
-    // if (isOnlinePayment) {
-    //   PaywayPaymentOption option = PaywayPaymentOption.abapay_khqr_deeplink;
-
-    //   if (selected.contains('card') || selected.contains('visa')) {
-    //     option = PaywayPaymentOption.cards; // Opens Visa/Mastercard directly
-    //   } else if (selected == 'aba pay' || selected == 'aba') {
-    //     option = PaywayPaymentOption
-    //         .abapay_khqr_deeplink; // Shows "Choose way to pay"
-    //   } else {
-    //     option =
-    //         PaywayPaymentOption.abapay_khqr_deeplink; // Shows KHQR receipt card
-    //   }
-
-    //   final paymentSuccess = await Navigator.push<bool>(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => CheckoutView(
-    //         amountUsd: _calculatedTotal,
-    //         cartItems: widget.cartItems,
-    //         paymentOption: option,
-    //       ),
-    //     ),
-    //   );
-
-    //   if (paymentSuccess != true) {
-    //     if (mounted) {
-    //       ScaffoldMessenger.of(context).showSnackBar(
-    //         const SnackBar(
-    //           content: Text('Payment cancelled or incomplete.'),
-    //           backgroundColor: Colors.orange,
-    //         ),
-    //       );
-    //     }
-    //     return;
-    //   }
-    // }
-
 // new latest
 // CHECK IF PAYMENT METHOD IS ABA / KHQR
     final selected = _selectedPayment.toLowerCase();
@@ -249,38 +168,167 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final isCard = selected.contains('card') || selected.contains('visa');
 
     if (isKhqrOrAba) {
-      // Direct Native QR Screen (Matching your working main.dart)
-      final paymentSuccess = await Navigator.push<bool>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => KhqrPaymentScreen(
-            amount: _calculatedTotal,
-            currency: 'USD',
-            cartItems: widget.cartItems,
-          ),
-        ),
+      // 10.0.2.2 for Android Emulator, or your local LAN IP (e.g. http://192.168.1.x:8000/api)
+      const String apiBaseUrl = 'http://10.0.2.2:8000/api';
+
+      final itemsPayload = widget.cartItems.map((item) {
+        return {
+          'product_id': item.product.id ?? 1,
+          'name': item.product.name,
+          'quantity': item.quantity,
+          'price': item.product.price,
+        };
+      }).toList();
+
+      // 1. Create the pending order in Laravel database
+      final response = await http.post(
+        Uri.parse('$apiBaseUrl/orders'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'payment_method': 'aba_khqr',
+          'shipping_address': _addressController.text.trim().isNotEmpty
+              ? _addressController.text.trim()
+              : 'Store Pickup',
+          'items': itemsPayload,
+        }),
       );
 
-      if (paymentSuccess != true) {
+      final resBody = jsonDecode(response.body);
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Payment cancelled or incomplete.'),
-              backgroundColor: Colors.orange,
+            SnackBar(
+              content: Text(resBody['message'] ?? 'Failed to create order.'),
+              backgroundColor: Colors.redAccent,
             ),
           );
         }
         return;
       }
-    } else if (isCard) {
-      // Card uses hosted WebView
+
+      final orderData = resBody['data'];
+      final int orderId = orderData['order_id'];
+      final String tranId = orderData['tran_id'];
+
+      // final double totalAmount = (orderData['amount'] as num).toDouble();
+
+      // USE THE TRUE TOTAL ($21.48)
+      final double totalAmount = _calculatedTotal;
+
+      // 2. Request PayWay Purchase API to get the active QR string
+      final now = DateTime.now().toUtc();
+      final pad = (int n) => n.toString().padLeft(2, '0');
+      final reqTime =
+          '${now.year}${pad(now.month)}${pad(now.day)}${pad(now.hour)}${pad(now.minute)}${pad(now.second)}';
+
+      final cleanAmount = totalAmount.toStringAsFixed(2);
+      final List<Map<String, dynamic>> paywayItemsList = [
+        {
+          "name": "Food Order",
+          "quantity": 1,
+          "price": double.parse(cleanAmount)
+        },
+      ];
+      final String itemsBase64 =
+          base64Encode(utf8.encode(jsonEncode(paywayItemsList)));
+
+      const String shipping = '0.00';
+      const String firstname = 'Customer';
+      const String lastname = 'User';
+      const String email = 'customer@example.com';
+      const String phone = '012345678';
+      const String type = 'purchase';
+      const String paymentOption = 'abapay_khqr';
+      const String currency = 'USD';
+      const String returnUrl = 'https://checkout-sandbox.payway.com.kh';
+
+      final String rawHash = '$reqTime'
+          '${kMerchantID.trim()}'
+          '$tranId'
+          '$cleanAmount'
+          '$itemsBase64'
+          '$shipping'
+          '$firstname'
+          '$lastname'
+          '$email'
+          '$phone'
+          '$type'
+          '$paymentOption'
+          '$returnUrl'
+          '$currency';
+
+      final keyBytes = utf8.encode(kMerchantApiKey.trim());
+      final hmac = Hmac(sha512, keyBytes);
+      final hash = base64Encode(hmac.convert(utf8.encode(rawHash)).bytes);
+
+      final purchaseReq = http.MultipartRequest(
+        'POST',
+        Uri.parse('$kBaseUrl/api/payment-gateway/v1/payments/purchase'),
+      );
+
+      purchaseReq.headers.addAll({
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://checkout-sandbox.payway.com.kh',
+        'Origin': 'https://checkout-sandbox.payway.com.kh',
+      });
+
+      purchaseReq.fields.addAll({
+        'req_time': reqTime,
+        'merchant_id': kMerchantID.trim(),
+        'tran_id': tranId,
+        'amount': cleanAmount,
+        'items': itemsBase64,
+        'shipping': shipping,
+        'firstname': firstname,
+        'lastname': lastname,
+        'email': email,
+        'phone': phone,
+        'type': type,
+        'payment_option': paymentOption,
+        'return_url': returnUrl,
+        'currency': currency,
+        'hash': hash,
+      });
+
+      final streamedResponse = await purchaseReq.send();
+      final purchaseRes = await http.Response.fromStream(streamedResponse);
+      final Map<String, dynamic> paywayData = jsonDecode(purchaseRes.body);
+
+      if (purchaseRes.statusCode != 200 ||
+          (paywayData['status']?['code'] != '00' &&
+              paywayData['status']?['code'] != 0)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(paywayData['status']?['message'] ??
+                  'Failed to generate KHQR.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        return;
+      }
+
+      final String? qrString = paywayData['qrString'];
+      final String? qrImage = paywayData['qrImage'];
+
+      // 3. Open auto-polling KHQR screen
       final paymentSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
-          builder: (context) => CheckoutView(
-            amountUsd: _calculatedTotal,
-            cartItems: widget.cartItems,
-            paymentOption: PaywayPaymentOption.cards,
+          builder: (context) => KhqrPaymentScreen(
+            orderId: orderId,
+            tranId: tranId,
+            amount: totalAmount,
+            currency: 'USD',
+            qrString: qrString ?? '',
+            qrImageBase64: qrImage,
+            apiBaseUrl: apiBaseUrl,
           ),
         ),
       );
@@ -298,22 +346,45 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
     }
 
-    // final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
-    //     _selectedPayment.toLowerCase().contains('khqr');
+    // final selected = _selectedPayment.toLowerCase();
+    // final isKhqrOrAba = selected.contains('aba') || selected.contains('khqr');
+    // final isCard = selected.contains('card') || selected.contains('visa');
 
-    // if (isAbaPayment) {
-    //   final paymentSuccess = await Get.to<bool>(
-    //     () => const CheckoutView(),
-    //     arguments: {
-    //       'amount': _calculatedTotal,
-    //       'items': (widget.cartItems ?? [])
-    //           .map((item) => {
-    //                 'name': item.product.name,
-    //                 'quantity': item.quantity,
-    //                 'price': item.product.price,
-    //               })
-    //           .toList(),
-    //     },
+    // if (isKhqrOrAba) {
+    //   // Direct Native QR Screen (Matching your working main.dart)
+    //   final paymentSuccess = await Navigator.push<bool>(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => KhqrPaymentScreen(
+    //         amount: _calculatedTotal,
+    //         currency: 'USD',
+    //         cartItems: widget.cartItems,
+    //       ),
+    //     ),
+    //   );
+
+    //   if (paymentSuccess != true) {
+    //     if (mounted) {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         const SnackBar(
+    //           content: Text('Payment cancelled or incomplete.'),
+    //           backgroundColor: Colors.orange,
+    //         ),
+    //       );
+    //     }
+    //     return;
+    //   }
+    // } else if (isCard) {
+    //   // Card uses hosted WebView
+    //   final paymentSuccess = await Navigator.push<bool>(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => CheckoutView(
+    //         amountUsd: _calculatedTotal,
+    //         cartItems: widget.cartItems,
+    //         paymentOption: PaywayPaymentOption.cards,
+    //       ),
+    //     ),
     //   );
 
     //   if (paymentSuccess != true) {
