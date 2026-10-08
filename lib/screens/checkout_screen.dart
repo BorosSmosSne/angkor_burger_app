@@ -9,11 +9,13 @@ import 'package:angkor_burger_app/models/order_model.dart';
 import 'package:angkor_burger_app/screens/aba_payway_webview_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
+import 'package:dart_payway/dart_payway.dart';
 import 'package:flutter/material.dart';
 import 'package:angkor_burger_app/screens/khqr_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  final List<CartItem>? cartItems;
+  // final double amountUsd;
+  final List<CartItem> cartItems;
   final double? subtotal;
   final double? deliveryFee;
   final double? discountAmount;
@@ -24,7 +26,7 @@ class CheckoutScreen extends StatefulWidget {
 
   const CheckoutScreen({
     super.key,
-    this.cartItems,
+    // this.cartItems,
     this.subtotal,
     this.deliveryFee,
     this.discountAmount,
@@ -32,6 +34,8 @@ class CheckoutScreen extends StatefulWidget {
     this.total,
     this.onClearCart,
     this.onNavigateToTab,
+    // required this.amountUsd,
+    required this.cartItems,
   });
 
   @override
@@ -195,22 +199,92 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Inside CheckoutScreen._processOrder()
 
 // CHECK IF PAYMENT METHOD IS ABA / KHQR
-    final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
-        _selectedPayment.toLowerCase().contains('khqr');
+    // final selected = _selectedPayment.toLowerCase();
+    // final isOnlinePayment = selected.contains('aba') ||
+    //     selected.contains('khqr') ||
+    //     selected.contains('card') ||
+    //     selected.contains('visa');
 
-    if (isAbaPayment) {
-      // Open teacher's CheckoutView with real cart items and total amount
+    // if (isOnlinePayment) {
+    //   PaywayPaymentOption option = PaywayPaymentOption.abapay_khqr_deeplink;
+
+    //   if (selected.contains('card') || selected.contains('visa')) {
+    //     option = PaywayPaymentOption.cards; // Opens Visa/Mastercard directly
+    //   } else if (selected == 'aba pay' || selected == 'aba') {
+    //     option = PaywayPaymentOption
+    //         .abapay_khqr_deeplink; // Shows "Choose way to pay"
+    //   } else {
+    //     option =
+    //         PaywayPaymentOption.abapay_khqr_deeplink; // Shows KHQR receipt card
+    //   }
+
+    //   final paymentSuccess = await Navigator.push<bool>(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => CheckoutView(
+    //         amountUsd: _calculatedTotal,
+    //         cartItems: widget.cartItems,
+    //         paymentOption: option,
+    //       ),
+    //     ),
+    //   );
+
+    //   if (paymentSuccess != true) {
+    //     if (mounted) {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         const SnackBar(
+    //           content: Text('Payment cancelled or incomplete.'),
+    //           backgroundColor: Colors.orange,
+    //         ),
+    //       );
+    //     }
+    //     return;
+    //   }
+    // }
+
+// new latest
+// CHECK IF PAYMENT METHOD IS ABA / KHQR
+    final selected = _selectedPayment.toLowerCase();
+    final isKhqrOrAba = selected.contains('aba') || selected.contains('khqr');
+    final isCard = selected.contains('card') || selected.contains('visa');
+
+    if (isKhqrOrAba) {
+      // Direct Native QR Screen (Matching your working main.dart)
+      final paymentSuccess = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => KhqrPaymentScreen(
+            amount: _calculatedTotal,
+            currency: 'USD',
+            cartItems: widget.cartItems,
+          ),
+        ),
+      );
+
+      if (paymentSuccess != true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment cancelled or incomplete.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+    } else if (isCard) {
+      // Card uses hosted WebView
       final paymentSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           builder: (context) => CheckoutView(
             amountUsd: _calculatedTotal,
-            cartItems: widget.cartItems ?? [],
+            cartItems: widget.cartItems,
+            paymentOption: PaywayPaymentOption.cards,
           ),
         ),
       );
 
-      // If user closed the screen without paying, stop here
       if (paymentSuccess != true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -223,6 +297,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
     }
+
+    // final isAbaPayment = _selectedPayment.toLowerCase().contains('aba') ||
+    //     _selectedPayment.toLowerCase().contains('khqr');
+
+    // if (isAbaPayment) {
+    //   final paymentSuccess = await Get.to<bool>(
+    //     () => const CheckoutView(),
+    //     arguments: {
+    //       'amount': _calculatedTotal,
+    //       'items': (widget.cartItems ?? [])
+    //           .map((item) => {
+    //                 'name': item.product.name,
+    //                 'quantity': item.quantity,
+    //                 'price': item.product.price,
+    //               })
+    //           .toList(),
+    //     },
+    //   );
+
+    //   if (paymentSuccess != true) {
+    //     if (mounted) {
+    //       ScaffoldMessenger.of(context).showSnackBar(
+    //         const SnackBar(
+    //           content: Text('Payment cancelled or incomplete.'),
+    //           backgroundColor: Colors.orange,
+    //         ),
+    //       );
+    //     }
+    //     return;
+    //   }
+    // }
+
     // Build the CustomerInfoModel & CheckoutModel
     final customerInfo = CustomerInfoModel(
       fullName: _nameController.text.trim(),
