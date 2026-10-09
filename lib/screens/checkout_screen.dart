@@ -192,6 +192,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           'shipping_address': _addressController.text.trim().isNotEmpty
               ? _addressController.text.trim()
               : 'Store Pickup',
+          'total': _calculatedTotal,
+          'amount': _calculatedTotal,
           'items': itemsPayload,
         }),
       );
@@ -322,13 +324,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => KhqrPaymentScreen(
-            orderId: orderId,
+            // orderId: orderId,
+            qrString: qrString ?? '',
             tranId: tranId,
             amount: totalAmount,
             currency: 'USD',
-            qrString: qrString ?? '',
-            qrImageBase64: qrImage,
-            apiBaseUrl: apiBaseUrl,
+            merchantName: 'Angkor Burger',
+            onCheckStatus: () async {
+              try {
+                final checkRes = await http.get(
+                  Uri.parse('$apiBaseUrl/check-transaction?tran_id=$tranId'),
+                );
+                if (checkRes.statusCode == 200) {
+                  final checkData = jsonDecode(checkRes.body);
+                  final status = checkData['data']?['payment_status'];
+                  final statusCode = checkData['data']?['payment_status_code'];
+                  return statusCode == 0 || status == 'APPROVED';
+                }
+              } catch (_) {}
+              return false;
+            },
+            // qrImageBase64: qrImage,
+            // apiBaseUrl: apiBaseUrl,
           ),
         ),
       );
