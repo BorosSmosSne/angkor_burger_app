@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:angkor_burger_app/screens/checkout_payment_method_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:angkor_burger_app/checkout/views/checkout_view.dart';
@@ -323,27 +324,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final paymentSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
-          builder: (context) => KhqrPaymentScreen(
+          builder: (context) => CheckoutPaymentMethodScreen(
             // orderId: orderId,
-            qrString: qrString ?? '',
+            amount: _calculatedTotal,
+            subtotal: _calculatedSubtotal,
             tranId: tranId,
-            amount: totalAmount,
-            currency: 'USD',
-            merchantName: 'Angkor Burger',
-            onCheckStatus: () async {
-              try {
-                final checkRes = await http.get(
-                  Uri.parse('$apiBaseUrl/check-transaction?tran_id=$tranId'),
-                );
-                if (checkRes.statusCode == 200) {
-                  final checkData = jsonDecode(checkRes.body);
-                  final status = checkData['data']?['payment_status'];
-                  final statusCode = checkData['data']?['payment_status_code'];
-                  return statusCode == 0 || status == 'APPROVED';
-                }
-              } catch (_) {}
-              return false;
-            },
+            qrString: qrString ?? '',
+            qrImageBase64: qrImage,
+            apiBaseUrl: apiBaseUrl,
+            orderId: orderId,
+            storeName: 'Angkor Burger',
+            // onCheckStatus: () async {
+            //   try {
+            //     final checkRes = await http.get(
+            //       Uri.parse('$apiBaseUrl/check-transaction?tran_id=$tranId'),
+            //     );
+            //     if (checkRes.statusCode == 200) {
+            //       final checkData = jsonDecode(checkRes.body);
+            //       final status = checkData['data']?['payment_status'];
+            //       final statusCode = checkData['data']?['payment_status_code'];
+            //       return statusCode == 0 || status == 'APPROVED';
+            //     }
+            //   } catch (_) {}
+            //   return false;
+            // },
             // qrImageBase64: qrImage,
             // apiBaseUrl: apiBaseUrl,
           ),
