@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart'; // Needed for kIsWeb
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,11 +8,93 @@ import 'package:angkor_burger_app/models/product_model.dart';
 
 class RestApi {
   // Automatically switches between Chrome/Web (127.0.0.1) and Android Emulator (10.0.2.2)
+  // static String get baseUrl {
+  //   if (kIsWeb) {
+  //     return 'http://127.0.0.1:8000/api';
+  //   }
+  //   if (Platform.isIOS) {
+  //     return 'http://127.0.0.1:8000/api';
+  //   }
+  //   // Android emulator fallback
+  //   return 'http://10.0.2.2:8000/api';
+  // }
+
+  // Automatically routes: Web & iOS Simulator -> 127.0.0.1, Android Emulator -> 10.0.2.2
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api';
     }
-    return 'http://10.0.2.2:8000/api';
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api';
+    }
+    if (Platform.isIOS) {
+      return 'http://127.0.0.1:8000/api';
+    }
+    // Fallback for macOS Desktop or other platforms
+    return 'http://127.0.0.1:8000/api';
+  }
+
+  // static Future<Map<String, dynamic>> login({
+  //   required String identifier,
+  //   required String password,
+  // }) async {
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('$baseUrl/login'),
+  //       headers: _headers,
+  //       body: jsonEncode({
+  //         'email': identifier.trim(),
+  //         'password': password.trim(),
+  //       }),
+  //     );
+
+  //     final data = jsonDecode(response.body);
+  //     if (response.statusCode == 200) {
+  //       return {'success': true, 'data': data};
+  //     } else {
+  //       return {'success': false, 'message': data['message'] ?? 'Login failed'};
+  //     }
+  //   } catch (e) {
+  //     return {'success': false, 'message': 'Network error: $e'};
+  //   }
+  // }
+
+  /// POST /api/login - Authenticate with Laravel MySQL
+  static Future<Map<String, dynamic>> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: _headers,
+        body: jsonEncode({
+          'email': email.trim(),
+          'password': password.trim(),
+        }),
+      );
+
+      final dynamic data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'user': data['user'],
+          'role': data['user']?['role']?.toString().toLowerCase() ?? 'customer',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Invalid credentials.',
+        };
+      }
+    } catch (e) {
+      debugPrint('RestApi Login Error: $e');
+      return {
+        'success': false,
+        'message': 'Cannot connect to server ($e)',
+      };
+    }
   }
 
 // Fetch all staff members

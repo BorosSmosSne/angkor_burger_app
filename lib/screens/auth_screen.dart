@@ -397,7 +397,84 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
-  Future<void> login() async {
+  // work well
+  // Future<void> login() async {
+  //   final email = _emailController.text.trim();
+  //   final password = _passwordController.text.trim();
+
+  //   if (email.isEmpty || password.isEmpty) {
+  //     _showErrorDialog('Please enter your email and password.');
+  //     return;
+  //   }
+
+  //   setState(() => _isLoading = true);
+
+  //   try {
+  //     // 1. Authenticate user with Firebase Auth
+  //     final userCredential =
+  //         await FirebaseAuth.instance.signInWithEmailAndPassword(
+  //       email: email,
+  //       password: password,
+  //     );
+
+  //     // 2. Obtain & save the Firebase ID token locally
+  //     final idToken = await userCredential.user?.getIdToken();
+  //     if (idToken != null) {
+  //       await saveCredentials(User(token: idToken, email: email));
+  //     }
+
+  //     // 3. Fetch user profile & assigned role from Laravel MySQL
+  //     final backendUser = await RestApi.fetchUserProfile(email);
+  //     final String role =
+  //         backendUser?['role']?.toString().toLowerCase() ?? 'customer';
+
+  //     // 4. Cache role and update active profile state
+  //     await UserProfileManager.saveUserRole(role);
+  //     UserProfileManager.updateProfile(
+  //       name:
+  //           backendUser?['name'] ?? userCredential.user?.displayName ?? 'User',
+  //       email: email,
+  //       phone: backendUser?['phone'] ?? userCredential.user?.phoneNumber ?? '',
+  //       role: role,
+  //     );
+
+  //     if (!mounted) return;
+
+  //     // 5. Route to screen based on role
+  //     if (role == 'admin') {
+  //       // Admin goes to BurgerMenuScreen (POS backend) with full access
+  //       Navigator.pushAndRemoveUntil(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+  //         (route) => false,
+  //       );
+  //     } else if (role == 'staff') {
+  //       // Staff goes to BurgerMenuScreen (Stock/Inventory mode)
+  //       Navigator.pushAndRemoveUntil(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+  //         (route) => false,
+  //       );
+  //     } else {
+  //       // Customer goes strictly to customer ordering view
+  //       Navigator.pushAndRemoveUntil(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const HomeScreen()),
+  //         (route) => false,
+  //       );
+  //     }
+  //   } on FirebaseAuthException catch (e) {
+  //     _showErrorDialog(_getAuthErrorMessage(e));
+  //   } catch (e) {
+  //     _showErrorDialog('An unexpected error occurred. Please try again.');
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //     }
+  //   }
+  // }
+
+Future<void> login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -409,67 +486,55 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
-      // 1. Authenticate user with Firebase Auth
-      final userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // 1. Authenticate directly against Laravel MySQL
+      final result = await RestApi.loginUser(
         email: email,
         password: password,
       );
 
-      // 2. Obtain & save the Firebase ID token locally
-      final idToken = await userCredential.user?.getIdToken();
-      if (idToken != null) {
-        await saveCredentials(User(token: idToken, email: email));
-      }
-
-      // 3. Fetch user profile & assigned role from Laravel MySQL
-      final backendUser = await RestApi.fetchUserProfile(email);
-      final String role =
-          backendUser?['role']?.toString().toLowerCase() ?? 'customer';
-
-      // 4. Cache role and update active profile state
-      await UserProfileManager.saveUserRole(role);
-      UserProfileManager.updateProfile(
-        name:
-            backendUser?['name'] ?? userCredential.user?.displayName ?? 'User',
-        email: email,
-        phone: backendUser?['phone'] ?? userCredential.user?.phoneNumber ?? '',
-        role: role,
-      );
-
       if (!mounted) return;
 
-      // 5. Route to screen based on role
-      if (role == 'admin') {
-        // Admin goes to BurgerMenuScreen (POS backend) with full access
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
-          (route) => false,
+      if (result['success'] == true) {
+        final Map<String, dynamic> backendUser = result['user'];
+        final String role = result['role'];
+
+        // 2. Cache role and profile data
+        await UserProfileManager.saveUserRole(role);
+        UserProfileManager.updateProfile(
+          name: backendUser['name'] ?? 'User',
+          email: backendUser['email'] ?? email,
+          phone: backendUser['phone'] ?? '',
+          role: role,
         );
-      } else if (role == 'staff') {
-        // Staff goes to BurgerMenuScreen (Stock/Inventory mode)
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
-          (route) => false,
-        );
+
+        // 3. Save session locally
+        await saveCredentials(User(
+          email: backendUser['email'] ?? email,
+          name: backendUser['name'] ?? '',
+          phone: backendUser['phone'] ?? '',
+        ));
+
+        // 4. Route based on role
+        if (role == 'admin' || role == 'staff') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
       } else {
-        // Customer goes strictly to customer ordering view
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
+        _showErrorDialog(result['message'] ?? 'Login failed.');
       }
-    } on FirebaseAuthException catch (e) {
-      _showErrorDialog(_getAuthErrorMessage(e));
     } catch (e) {
       _showErrorDialog('An unexpected error occurred. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

@@ -1070,8 +1070,8 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       // Map localhost/127.0.0.1 to 10.0.2.2 on Android emulator
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         clean = clean
-            .replaceAll('127.0.0.1', '10.0.2.2')
-            .replaceAll('localhost', '10.0.2.2');
+            .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
+            .replaceAll('localhost:8000', '10.0.2.2:8000');
       }
 
       final safeUrl = Uri.encodeFull(clean);
