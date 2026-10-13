@@ -50,6 +50,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   ServiceType _serviceType = ServiceType.delivery;
   String _selectedPayment = 'Cash';
+  String _selectedPickupTime = 'ASAP (~5 mins)';
 
   bool get _isDelivery => _serviceType == ServiceType.delivery;
   List<PaymentMethodModel> get _paymentMethods =>
@@ -1664,6 +1665,71 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               color: valueColor ?? Colors.black87,
               fontSize: 14,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Customer Pickup Time Selection Widget
+  Widget _buildPickupTimeSelector() {
+    final List<String> pickupOptions = [
+      'ASAP (~5 mins)',
+      '10 mins',
+      '15 mins',
+      '20 mins',
+      '30 mins',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.schedule_rounded, color: Color(0xFF8B1D1D), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Select Pickup Time',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: pickupOptions.map((time) {
+              final isSelected = _selectedPickupTime == time;
+              return ChoiceChip(
+                label: Text(time),
+                selected: isSelected,
+                selectedColor: const Color(0xFF8B1D1D),
+                backgroundColor: const Color(0xFFF5F5F5),
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : const Color(0xFF333333),
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  fontSize: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedPickupTime = time);
+                },
+              );
+            }).toList(),
           ),
         ],
       ),

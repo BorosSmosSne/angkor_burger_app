@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
+import 'package:angkor_burger_app/screens/staff_kitchen_screen.dart';
 import 'package:angkor_burger_app/screens/staff_management_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -356,6 +357,18 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.assignment_ind_outlined,
+              color: Color(0xFF7A1C1C)),
+          tooltip: 'Kitchen & Orders Control',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const StaffKitchenScreen()),
             );
           },
         ),
@@ -1128,7 +1141,23 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       unselectedItemColor: Colors.grey,
       selectedFontSize: 10,
       unselectedFontSize: 10,
-      onTap: (index) => setState(() => _currentBottomNavIndex = index),
+      onTap: (index) {
+        if (index == 3) {
+          // TAB 3: PUSH DIRECTLY TO STAFF KITCHEN SCREEN
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const StaffKitchenScreen()),
+          );
+        } else if (index == 0) {
+          // TAB 0: GO TO CUSTOMER HOME SCREEN
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          setState(() => _currentBottomNavIndex = index);
+        }
+      },
       items: const [
         BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined), label: 'Overview'),

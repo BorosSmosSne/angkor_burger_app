@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../services/rest_api.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -224,14 +226,15 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
               Navigator.pop(ctx);
               setState(() => _isLoading = true);
               // 1. Create staff in Firebase Auth so they can log in via AuthScreen
-              // try {
-              //   await FirebaseAuth.instance.createUserWithEmailAndPassword(
-              //     email: emailCtrl.text.trim(),
-              //     password: passwordCtrl.text.trim(),
-              //   );
-              // } catch (_) {
-              //   // If account exists in Firebase, continue to Laravel sync
-              // }
+              try {
+                await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                  email: emailCtrl.text.trim(),
+                  password: passwordCtrl.text.trim(),
+                );
+              } catch (e) {
+                // If account exists in Firebase, continue to Laravel sync
+                debugPrint('Firebase registration note: $e');
+              }
 
               // 2. Persist staff record with 'staff' role in Laravel MySQL
               final result = await RestApi.createStaffUser(

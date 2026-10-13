@@ -6,6 +6,57 @@ import 'package:image_picker/image_picker.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 
 class RestApi {
+  static Map<String, String> get _headers => {
+        // 'Content-Type': 'application/json',
+        // 'Accept': 'application/json',
+        'Accept': 'application/json',
+      };
+  static Map<String, String> get _jsonHeaders => {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+  static String currentUserRole = 'customer';
+  static int? currentUserId;
+
+  static Future<Map<String, dynamic>> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/login'),
+        headers: _jsonHeaders,
+        body: jsonEncode({
+          'email': email.trim(),
+          'password': password.trim(),
+        }),
+      );
+
+      final dynamic data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final role =
+            data['user']?['role']?.toString().toLowerCase() ?? 'customer';
+        currentUserRole = role; // Save role ('admin', 'staff', or 'customer')
+        currentUserId = data['user']?['id'];
+
+        return {
+          'success': true,
+          'user': data['user'],
+          'role': role,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Invalid credentials.',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Connection error: $e'};
+    }
+  }
+
   // Automatically switches between Chrome/Web (127.0.0.1) and Android Emulator (10.0.2.2)
   static String get baseUrl {
     if (kIsWeb) {
@@ -124,11 +175,6 @@ class RestApi {
       return false;
     }
   }
-
-  static Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
 
   /// PUT /api/user/profile - Save updated profile details to Laravel MySQL
   static Future<bool> updateUserProfile({
