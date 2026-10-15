@@ -36,10 +36,8 @@ class _AuthScreenState extends State<AuthScreen>
   bool _rememberMe = false;
   bool _isLoading = false;
 
-  ConfirmationResult? _webConfirmationResult; // For web OTP verification
-
+  ConfirmationResult? _webConfirmationResult;
   String? _verificationId;
-  int? _resendToken;
 
   final Color _brandRed = const Color(0xFF8B1D1D);
   final Color _bgColor = const Color(0xFFFCF5F0);
@@ -47,6 +45,7 @@ class _AuthScreenState extends State<AuthScreen>
   @override
   void initState() {
     super.initState();
+    RestApi.resetSession();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -61,13 +60,11 @@ class _AuthScreenState extends State<AuthScreen>
     _loadRememberedCredentials();
   }
 
-  // 1. Send SMS Code (Web + Mobile compatible)
   Future<void> sendPhoneCode(String phoneNumber) async {
     setState(() => _isLoading = true);
 
     try {
       if (kIsWeb) {
-        // Web flow using signInWithPhoneNumber
         final confirmationResult =
             await FirebaseAuth.instance.signInWithPhoneNumber(
           phoneNumber.trim(),
@@ -78,7 +75,6 @@ class _AuthScreenState extends State<AuthScreen>
         });
         _showOtpInputDialog();
       } else {
-        // Mobile flow
         await FirebaseAuth.instance.verifyPhoneNumber(
           phoneNumber: phoneNumber.trim(),
           verificationCompleted: (PhoneAuthCredential credential) async {
@@ -149,7 +145,6 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-// 2. Verify OTP & Complete Sign-In
   Future<void> verifyOtp(String smsCode) async {
     setState(() => _isLoading = true);
 
@@ -176,6 +171,9 @@ class _AuthScreenState extends State<AuthScreen>
           email: userCredential.user?.phoneNumber ?? '',
         ));
       }
+
+      RestApi.currentUserRole = 'customer';
+      await UserProfileManager.saveUserRole('customer');
 
       if (mounted) {
         Navigator.pushAndRemoveUntil(
@@ -205,6 +203,9 @@ class _AuthScreenState extends State<AuthScreen>
         phone: userCredential.user?.phoneNumber ?? '',
       ));
     }
+
+    RestApi.currentUserRole = 'customer';
+    await UserProfileManager.saveUserRole('customer');
 
     if (mounted) {
       Navigator.pushAndRemoveUntil(
@@ -315,11 +316,9 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Future<void> saveCredentials(User user) async {
-    // Save the token to local storage
     final SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setString('angkor.pos.token', user.token ?? '');
 
-    // Save or clear Remember Me credentials
     if (_rememberMe || _keepSignedIn) {
       await preferences.setBool('angkor.pos.remember_me', true);
       await preferences.setString(
@@ -333,22 +332,18 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
-  // --- GOOGLE SIGN IN METHOD ---
   Future<void> signInWithGoogle() async {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Create Google Auth Provider
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
       googleProvider.addScope('email');
       googleProvider.addScope('profile');
       googleProvider.setCustomParameters({'prompt': 'select_account'});
 
-      // 2. Trigger Native Firebase Sign-In Popup
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithPopup(googleProvider);
 
-      // 3. Obtain Firebase ID token
       final user = userCredential.user;
       final idToken = await userCredential.user?.getIdToken();
 
@@ -359,26 +354,31 @@ class _AuthScreenState extends State<AuthScreen>
             : 'Google User';
         final phone = user.phoneNumber ?? '';
 
-        // 3. Save the auth credentials locally
         await saveCredentials(User(
           token: idToken,
-          // email: userCredential.user?.email ?? '',
-          // name: userCredential.user?.displayName ?? 'Google User',
           email: email,
           name: name,
           phone: phone,
         ));
 
-        // 4. Persist to Laravel MySQL database
         await RestApi.updateUserProfile(
           email: email,
           name: name,
           phone: phone,
           address: '',
+          role: 'customer',
+        );
+
+        RestApi.currentUserRole = 'customer';
+        await UserProfileManager.saveUserRole('customer');
+        UserProfileManager.updateProfile(
+          name: name,
+          email: email,
+          phone: phone,
+          role: 'customer',
         );
       }
 
-      // 4. Navigate to HomeScreen
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -387,10 +387,8 @@ class _AuthScreenState extends State<AuthScreen>
         );
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint('Firebase Google Auth Error: ${e.code} - ${e.message}');
       _showErrorDialog(e.message ?? 'Google Sign-In failed.');
     } catch (e) {
-      debugPrint('Google Sign-In General Error: $e');
       _showErrorDialog('Failed to sign in with Google: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -409,25 +407,22 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
-      // 1. Authenticate user with Firebase Auth
       final userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 2. Obtain & save the Firebase ID token locally
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
         await saveCredentials(User(token: idToken, email: email));
       }
 
-      // 3. Fetch user profile & assigned role from Laravel MySQL
       final backendUser = await RestApi.fetchUserProfile(email);
       final String role =
           backendUser?['role']?.toString().toLowerCase() ?? 'customer';
 
-      // 4. Cache role and update active profile state
+      RestApi.currentUserRole = role;
       await UserProfileManager.saveUserRole(role);
       UserProfileManager.updateProfile(
         name:
@@ -439,23 +434,13 @@ class _AuthScreenState extends State<AuthScreen>
 
       if (!mounted) return;
 
-      // 5. Route to screen based on role
-      if (role == 'admin') {
-        // Admin goes to BurgerMenuScreen (POS backend) with full access
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
-          (route) => false,
-        );
-      } else if (role == 'staff') {
-        // Staff goes to BurgerMenuScreen (Stock/Inventory mode)
+      if (role == 'admin' || role == 'staff') {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
           (route) => false,
         );
       } else {
-        // Customer goes strictly to customer ordering view
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -473,52 +458,6 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
-  // old
-  // Future<void> login() async {
-  //   final email = 'angkor@gmail.com';
-  //   final password = 'sv9@123';
-  //   if (_emailController.text == email &&
-  //       _passwordController.text == password) {
-  //     final responeToken =
-  //         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI4IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4MDAwMDAwMDB9.6n4w6_uCgMbeuY7Vp_tHhUksL8Pq8wW7Fk1Z6_9_1z2';
-  //     await saveCredentials(User(token: responeToken));
-  //     // print('Logged in successfully!');
-  //     if (mounted) {
-  //       Navigator.pushAndRemoveUntil(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => const HomeScreen()),
-  //         (route) => false,
-  //       );
-  //     }
-  //   } else {
-  //     showDialog(
-  //       context: context,
-  //       builder: (context) => Dialog(
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(16),
-  //         ),
-  //         child: const Padding(
-  //           padding: EdgeInsets.all(20),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               Text(
-  //                 'Login Failed',
-  //                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-  //               ),
-  //               SizedBox(height: 8),
-  //               Text(
-  //                 'Invalid email or password',
-  //                 textAlign: TextAlign.center,
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }
-// --- FIREBASE SIGN UP ---
   Future<void> signUp() async {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
@@ -543,37 +482,40 @@ class _AuthScreenState extends State<AuthScreen>
     try {
       final userCredential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        email: email,
+        password: password,
       );
 
-      // 1. Save display name to firebase
-      final fullName = _nameController.text.trim();
-      if (fullName.isNotEmpty) {
-        await userCredential.user?.updateDisplayName(fullName);
-        await userCredential.user?.reload(); // Refresh user data
-      }
+      final fullName = name.isNotEmpty ? name : 'User';
+      await userCredential.user?.updateDisplayName(fullName);
+      await userCredential.user?.reload();
 
       await RestApi.updateUserProfile(
-          email: _emailController.text.trim(),
-          name: fullName.isNotEmpty ? fullName : 'User',
-          phone: '',
-          address: '');
-
-      // 2. Immediately update the profile manager
-      UserProfileManager.updateProfile(
-        name: fullName.isNotEmpty ? fullName : 'User',
-        email: _emailController.text.trim(),
+        email: email,
+        name: fullName,
         phone: '',
         address: '',
+        password: password,
+        role: 'customer',
+      );
+
+      RestApi.currentUserRole = 'customer';
+      await UserProfileManager.saveUserRole('customer');
+      UserProfileManager.updateProfile(
+        name: fullName,
+        email: email,
+        phone: '',
+        address: '',
+        role: 'customer',
       );
 
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
         await saveCredentials(User(
-            token: idToken,
-            name: fullName,
-            email: userCredential.user?.email ?? ''));
+          token: idToken,
+          name: fullName,
+          email: email,
+        ));
       }
 
       if (mounted) {
@@ -612,7 +554,6 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
-// Extracted error dialog helper
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -659,16 +600,11 @@ class _AuthScreenState extends State<AuthScreen>
   void _toggleTab(bool isSignUp) {
     FocusScope.of(context).unfocus();
     setState(() {
-      // 1. Always clear the passwords for security & clean validation
       _passwordController.clear();
       _confirmPasswordController.clear();
-
-      // 2. Clear full name when going back to Log In mode
       if (!isSignUp) {
         _nameController.clear();
       }
-
-      // Note: We leave _emailController intact so the user doesn't have to re-type it!
     });
     if (isSignUp) {
       _controller.forward();
@@ -691,7 +627,6 @@ class _AuthScreenState extends State<AuthScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // App Logo & Branding Header (Outside on top of the card)
                   Hero(
                     tag: 'app_logo',
                     child: Image.asset(
@@ -722,8 +657,6 @@ class _AuthScreenState extends State<AuthScreen>
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Card Container (BoxDecoration)
                   Container(
                     width: double.infinity,
                     constraints: const BoxConstraints(maxWidth: 400),
@@ -744,11 +677,8 @@ class _AuthScreenState extends State<AuthScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Smooth Synchronized Tab Switcher
                         _buildTabSwitcher(),
                         const SizedBox(height: 24),
-
-                        // Full Name Field (Collapses & fades when switching to Log In)
                         SizeTransition(
                           sizeFactor: _animation,
                           axisAlignment: -1.0,
@@ -761,16 +691,12 @@ class _AuthScreenState extends State<AuthScreen>
                             ),
                           ),
                         ),
-
-                        // Email Field (Always visible in both)
                         _buildLabelTextField(
                           label: 'Email',
                           hint: 'Enter your email',
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                         ),
-
-                        // Password Field (Always visible in both)
                         _buildLabelTextField(
                           label: 'Password',
                           hint: 'Enter your password',
@@ -783,8 +709,6 @@ class _AuthScreenState extends State<AuthScreen>
                             });
                           },
                         ),
-
-                        // Confirm Password Field (Collapses & fades when switching to Log In)
                         SizeTransition(
                           sizeFactor: _animation,
                           axisAlignment: -1.0,
@@ -805,8 +729,6 @@ class _AuthScreenState extends State<AuthScreen>
                             ),
                           ),
                         ),
-
-                        // Checkbox Row (Keep signed in / Remember me & Forgot Password)
                         AnimatedBuilder(
                           animation: _animation,
                           builder: (context, _) {
@@ -853,16 +775,13 @@ class _AuthScreenState extends State<AuthScreen>
                                     ),
                                   ],
                                 ),
-                                // Forgot Password (smoothly fades in during Log In mode)
                                 Opacity(
                                   opacity: (1.0 - t).clamp(0.0, 1.0),
                                   child: IgnorePointer(
                                     ignoring: t > 0.2,
                                     child: GestureDetector(
                                       behavior: HitTestBehavior.opaque,
-                                      onTap: () {
-                                        // Forgot password handler
-                                      },
+                                      onTap: () {},
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 4,
@@ -884,8 +803,6 @@ class _AuthScreenState extends State<AuthScreen>
                           },
                         ),
                         const SizedBox(height: 24),
-
-                        // Submit Button
                         AnimatedButton(
                           onPressed: _isLoading ? () {} : _handleSubmit,
                           child: ElevatedButton(
@@ -927,8 +844,6 @@ class _AuthScreenState extends State<AuthScreen>
                           ),
                         ),
                         const SizedBox(height: 20),
-
-                        // 1. The Divider
                         Row(
                           children: [
                             Expanded(
@@ -949,8 +864,6 @@ class _AuthScreenState extends State<AuthScreen>
                           ],
                         ),
                         const SizedBox(height: 20),
-
-                        // 2. The Side-by-Side Buttons
                         Row(
                           children: [
                             Expanded(
@@ -1007,8 +920,6 @@ class _AuthScreenState extends State<AuthScreen>
                               ),
                             ),
                             const SizedBox(width: 8),
-
-                            // 📱 Phone Button
                             Expanded(
                               child: OutlinedButton(
                                 onPressed:
@@ -1027,8 +938,6 @@ class _AuthScreenState extends State<AuthScreen>
                           ],
                         ),
                         const SizedBox(height: 24),
-
-                        // 3. The Bottom Footer (Animated switch between Log In / Sign Up)
                         AnimatedBuilder(
                           animation: _animation,
                           builder: (context, _) {
@@ -1079,7 +988,6 @@ class _AuthScreenState extends State<AuthScreen>
     );
   }
 
-  // Sliding Pill Tab Switcher
   Widget _buildTabSwitcher() {
     return Container(
       height: 50,
@@ -1091,11 +999,9 @@ class _AuthScreenState extends State<AuthScreen>
       child: AnimatedBuilder(
         animation: _animation,
         builder: (context, _) {
-          final double t =
-              _animation.value; // 1.0 = SignUp (Left), 0.0 = LogIn (Right)
+          final double t = _animation.value;
           return Stack(
             children: [
-              // Smooth Sliding White Pill Indicator
               Align(
                 alignment: Alignment(-1.0 + (1.0 - t) * 2.0, 0.0),
                 child: FractionallySizedBox(
@@ -1116,8 +1022,6 @@ class _AuthScreenState extends State<AuthScreen>
                   ),
                 ),
               ),
-
-              // Tab Texts
               Row(
                 children: [
                   Expanded(
@@ -1128,9 +1032,10 @@ class _AuthScreenState extends State<AuthScreen>
                         child: Text(
                           'Sign Up',
                           style: TextStyle(
-                            fontFamily: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.fontFamily,
+                            fontFamily: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.fontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Color.lerp(
@@ -1151,9 +1056,10 @@ class _AuthScreenState extends State<AuthScreen>
                         child: Text(
                           'Log In',
                           style: TextStyle(
-                            fontFamily: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.fontFamily,
+                            fontFamily: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.fontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Color.lerp(

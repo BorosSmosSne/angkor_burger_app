@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart'; // Needed for kIsWeb
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 
 class RestApi {
   static Map<String, String> get _headers => {
-        // 'Content-Type': 'application/json',
-        // 'Accept': 'application/json',
         'Accept': 'application/json',
       };
   static Map<String, String> get _jsonHeaders => {
@@ -18,6 +15,11 @@ class RestApi {
 
   static String currentUserRole = 'customer';
   static int? currentUserId;
+
+  static void resetSession() {
+    currentUserRole = 'customer';
+    currentUserId = null;
+  }
 
   static Future<Map<String, dynamic>> loginUser({
     required String email,
@@ -38,7 +40,7 @@ class RestApi {
       if (response.statusCode == 200 && data['success'] == true) {
         final role =
             data['user']?['role']?.toString().toLowerCase() ?? 'customer';
-        currentUserRole = role; // Save role ('admin', 'staff', or 'customer')
+        currentUserRole = role;
         currentUserId = data['user']?['id'];
 
         return {
@@ -57,7 +59,6 @@ class RestApi {
     }
   }
 
-  // Automatically switches between Chrome/Web (127.0.0.1) and Android Emulator (10.0.2.2)
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api';
@@ -65,7 +66,6 @@ class RestApi {
     return 'http://10.0.2.2:8000/api';
   }
 
-// Fetch all staff members
   static Future<List<dynamic>> fetchStaffMembers() async {
     try {
       final response = await http.get(
@@ -81,7 +81,6 @@ class RestApi {
     return [];
   }
 
-// Create a staff user
   static Future<Map<String, dynamic>> createStaffUser({
     required String name,
     required String email,
@@ -91,10 +90,7 @@ class RestApi {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/admin/create-staff'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: _jsonHeaders,
         body: jsonEncode({
           'name': name,
           'email': email,
@@ -103,25 +99,19 @@ class RestApi {
         }),
       );
 
-      debugPrint('Create Staff Status: ${response.statusCode}');
-      debugPrint('Create Staff Body: ${response.body}');
-
       final Map<String, dynamic> data = jsonDecode(response.body);
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return {'success': true, 'message': 'Staff added successfully!'};
       } else {
-        // Return the specific Laravel validation message
         final errorMsg = data['message'] ?? 'Failed to add staff.';
         return {'success': false, 'message': errorMsg};
       }
     } catch (e) {
-      debugPrint('Error creating staff: $e');
       return {'success': false, 'message': 'Network/Connection error: $e'};
     }
   }
 
-// Update staff info or reset password
   static Future<Map<String, dynamic>> updateStaffUser({
     required int id,
     required String name,
@@ -141,10 +131,7 @@ class RestApi {
 
       final response = await http.put(
         Uri.parse('$baseUrl/admin/staff/$id'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: _jsonHeaders,
         body: jsonEncode(body),
       );
 
@@ -162,7 +149,6 @@ class RestApi {
     }
   }
 
-// Delete staff account
   static Future<bool> deleteStaffUser(int id) async {
     try {
       final response = await http.delete(
@@ -171,41 +157,43 @@ class RestApi {
       );
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint('Error deleting staff: $e');
       return false;
     }
   }
 
-  /// PUT /api/user/profile - Save updated profile details to Laravel MySQL
   static Future<bool> updateUserProfile({
     required String email,
     required String name,
     required String phone,
     required String address,
+    String? password,
     String? gender,
     String? dateOfBirth,
+    String? role,
   }) async {
     try {
       final response = await http.put(
         Uri.parse('$baseUrl/user/profile'),
-        headers: _headers,
+        headers: _jsonHeaders,
         body: jsonEncode({
-          'email': email,
-          'name': name,
-          'phone': phone,
-          'address': address,
+          'email': email.trim(),
+          'name': name.trim(),
+          'phone': phone.trim().isNotEmpty ? phone.trim() : null,
+          'address': address.trim().isNotEmpty ? address.trim() : null,
+          'password': password,
+          'plain_password': password,
           'gender': gender,
           'date_of_birth': dateOfBirth,
+          'role': role ?? 'customer',
         }),
       );
-      return response.statusCode == 200;
+      return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
       debugPrint('Error updating profile in Laravel: $e');
       return false;
     }
   }
 
-  /// POST /api/categories - Save a new category to MySQL database
   static Future<bool> createCategory(String name) async {
     try {
       final response = await http.post(
@@ -215,12 +203,10 @@ class RestApi {
       );
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      debugPrint('Error in createCategory: $e');
       return false;
     }
   }
 
-  /// GET /api/user/profile?email=...
   static Future<Map<String, dynamic>?> fetchUserProfile(String email) async {
     try {
       final response = await http.get(
@@ -238,7 +224,6 @@ class RestApi {
     return null;
   }
 
-  /// GET /api/categories - Fetch all categories from backend
   static Future<List<dynamic>> fetchCategories() async {
     try {
       final response = await http.get(
@@ -255,36 +240,25 @@ class RestApi {
     return [];
   }
 
-  /// 1. READ (GET all products)
   static Future<List<ProductModel>> fetchProducts() async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/products'),
         headers: _headers,
       );
-      debugPrint('--> [RestApi] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final dynamic decoded = jsonDecode(response.body);
         final List data = decoded is List ? decoded : (decoded['data'] ?? []);
-
-        debugPrint('--> [RestApi] Parsing ${data.length} raw JSON items...');
-        final products =
-            data.map((item) => ProductModel.fromJson(item)).toList();
-        debugPrint(
-            '--> [RestApi] Successfully parsed ${products.length} products!');
-        return products;
+        return data.map((item) => ProductModel.fromJson(item)).toList();
       } else {
         throw Exception('Failed to load products: ${response.statusCode}');
       }
-    } catch (e, stack) {
-      debugPrint('Error in fetchProducts: $e');
-      debugPrint(stack.toString());
+    } catch (e) {
       rethrow;
     }
   }
 
-  /// 2. MULTIPART POST: Send file bytes + text fields
   static Future<bool> uploadProductWithImage({
     required Map<String, dynamic> fields,
     XFile? imageFile,
@@ -292,15 +266,12 @@ class RestApi {
     try {
       final uri = Uri.parse('$baseUrl/products');
       final request = http.MultipartRequest('POST', uri);
-
       request.headers['Accept'] = 'application/json';
 
-      // Add text fields
       fields.forEach((key, value) {
         request.fields[key] = value.toString();
       });
 
-      // Add the image file bytes
       if (imageFile != null) {
         final bytes = await imageFile.readAsBytes();
         final multipartFile = http.MultipartFile.fromBytes(
@@ -315,12 +286,10 @@ class RestApi {
       final response = await http.Response.fromStream(streamedResponse);
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      debugPrint('Error in uploadProductWithImage: $e');
       return false;
     }
   }
 
-  /// 3. CREATE via JSON (fallback if no image file)
   static Future<bool> createProduct(Map<String, dynamic> productData) async {
     try {
       final response = await http.post(
@@ -330,24 +299,20 @@ class RestApi {
       );
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      debugPrint('Error in createProduct: $e');
       return false;
     }
   }
 
-  /// 4. UPDATE with optional image file upload
   static Future<bool> updateProductWithImage({
     required int id,
     required Map<String, dynamic> fields,
     XFile? imageFile,
   }) async {
     try {
-      // Laravel handles PUT requests with files best using POST with _method = PUT
       final uri = Uri.parse('$baseUrl/products/$id');
       final request = http.MultipartRequest('POST', uri);
-
       request.headers['Accept'] = 'application/json';
-      request.fields['_method'] = 'PUT'; // Method spoofing for Laravel
+      request.fields['_method'] = 'PUT';
 
       fields.forEach((key, value) {
         request.fields[key] = value.toString();
@@ -367,12 +332,10 @@ class RestApi {
       final response = await http.Response.fromStream(streamedResponse);
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint('Error in updateProductWithImage: $e');
       return false;
     }
   }
 
-  /// 5. DELETE product by ID
   static Future<bool> deleteProduct(int id) async {
     try {
       final response = await http.delete(
@@ -381,7 +344,6 @@ class RestApi {
       );
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint('Error in deleteProduct: $e');
       return false;
     }
   }

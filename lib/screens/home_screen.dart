@@ -33,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedNavIndex = 0;
   final List<CartItem> _cartItems = [];
 
-  // Live products loaded from Laravel REST API
   List<ProductModel> _loadedProducts = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -59,8 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchLiveProducts();
     _checkStaffRedirect();
+    _fetchLiveProducts();
   }
 
   Future<void> _checkStaffRedirect() async {
@@ -71,9 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
               UserProfileManager.profileNotifier.value.role)
           .toLowerCase();
 
-      // If logged in user is 'staff', redirect immediately to BurgerMenuScreen (Catalog & Orders)
-      if (savedRole == 'staff' ||
-          RestApi.currentUserRole.toLowerCase() == 'staff') {
+      final currentRole =
+          UserProfileManager.profileNotifier.value.role.toLowerCase();
+
+      if (savedRole == 'staff' && currentRole == 'staff') {
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -87,8 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchLiveProducts() async {
     try {
-      debugPrint(
-          '--> Fetching live products from: ${RestApi.baseUrl}/products');
       final products = await RestApi.fetchProducts();
       if (mounted) {
         setState(() {
@@ -98,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      debugPrint('--> Error fetching live products: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -132,7 +129,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return false;
   }
 
-  // Filter products by selected category, search query, and price range
   List<ProductModel> get _filteredProducts {
     final list = _loadedProducts.where((p) {
       final matchesCategory = _selectedCategory == 'All' ||
@@ -164,10 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
   double get _totalCartPrice {
     return _cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
   }
-
-  // ==========================================================================
-  // CART STATE MANAGEMENT METHODS
-  // ==========================================================================
 
   void _addToCart(CartItem item) {
     setState(() {
@@ -225,10 +217,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ==========================================================================
-  // FILTER & ADJUST BOTTOM SHEET (CATEGORY, PRICE RANGE, SORT)
-  // ==========================================================================
-
   void _showCategoryFilterBottomSheet() {
     String tempCategory = _selectedCategory;
     RangeValues tempPriceRange = _priceRange;
@@ -270,7 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Drag Handle
                       Center(
                         child: Container(
                           width: 40,
@@ -282,8 +269,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-
-                      // Header
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -322,8 +307,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-
-                      // 1. CATEGORY SECTION
                       const Text(
                         'Category',
                         style: TextStyle(
@@ -368,8 +351,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         }).toList(),
                       ),
                       const SizedBox(height: 22),
-
-                      // 2. PRICE RANGE ADJUSTMENT SECTION
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -400,8 +381,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-
-                      // RangeSlider
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           activeTrackColor: AppColors.brandRed,
@@ -434,8 +413,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ),
                       ),
-
-                      // Quick Price Preset Chips
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -493,8 +470,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 22),
-
-                      // 3. SORT BY SECTION
                       const Text(
                         'Sort By',
                         style: TextStyle(
@@ -545,8 +520,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         }).toList(),
                       ),
                       const SizedBox(height: 28),
-
-                      // 4. APPLY BUTTON
                       SizedBox(
                         width: double.infinity,
                         height: 52,
@@ -617,7 +590,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper function to build category pills
   Widget _buildCategoryPill({
     required String title,
     required IconData icon,
@@ -674,7 +646,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Show cart confirmation SnackBar matching design
   void _showCartSnackBar() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -768,7 +739,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper function to build product card using helper/product_card.dart
   Widget _buildProductCard(ProductModel product) {
     return ProductCard(
       product: product,
@@ -823,7 +793,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper function to build slider dots
   Widget _buildDot({required bool isActive}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -870,7 +839,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onNavigateToTab: _onBottomNavTapped,
             onContinueShopping: () => _onBottomNavTapped(0),
           ),
-          // Inside IndexedStack children: [...]
           ValueListenableBuilder<UserProfileModel>(
             valueListenable: UserProfileManager.profileNotifier,
             builder: (context, profile, _) {
@@ -881,12 +849,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   RestApi.currentUserRole.toLowerCase() == 'admin' ||
                   UserProfileManager.isAdmin;
 
-              // 1. STAFF / ADMIN -> See the Kitchen Action Controller ([Accept], [Ready for Pickup], [Finish], [Cancel])
               if (isStaffOrAdmin) {
                 return const StaffKitchenScreen();
               }
 
-              // 2. CUSTOMER -> See their live order timeline
               return OrderScreen(
                 cartItems: _cartItems,
                 onAddToCart: _addToCart,
@@ -915,17 +881,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeTab() {
     return Column(
       children: [
-        // ==========================================
-        // 1. FLOATING WHITE HEADER CONTAINER
-        // ==========================================
-
         ValueListenableBuilder<UserProfileModel>(
             valueListenable: UserProfileManager.profileNotifier,
             builder: (context, profile, _) {
-              final bool isAdmin = profile.role.toLowerCase() == 'admin';
               return AngkorAppBar(
                 actions: [
-                  // 1. ADMIN ONLY: Inventory / Manage Backend Button
                   if (UserProfileManager.isAdmin)
                     IconButton(
                       tooltip: 'Manage Catalog (Admin)',
@@ -942,7 +902,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     )
-                  // 2. CUSTOMER & STAFF: Notification Bell / Ringing Alert
                   else ...[
                     IconButton(
                       tooltip: 'Notifications',
@@ -961,7 +920,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-                    // Optional: Add Favorites Heart Icon
                     IconButton(
                       tooltip: 'Favorites',
                       icon: const Icon(
@@ -969,9 +927,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Color(0xFF7A1C1C),
                         size: 22,
                       ),
-                      onPressed: () {
-                        // Your onFavoritePressed handler or open FavoritesScreen
-                      },
+                      onPressed: () {},
                     ),
                   ],
                   const SizedBox(width: 8),
@@ -995,17 +951,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               );
             }),
-
-        // Scrollable Body Content
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ==========================================
-                // 2. SEARCH BAR (TextField)
-                // ==========================================
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -1088,10 +1039,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // ==========================================
-                // 3. PROMOTION BANNER (CarouselSlider)
-                // ==========================================
                 CarouselSlider(
                   items: bannerImages.map((imagePath) {
                     return Container(
@@ -1140,8 +1087,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // Carousel Dots Indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: bannerImages.asMap().entries.map((entry) {
@@ -1151,10 +1096,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 20),
-
-                // ==========================================
-                // 4. CATEGORIES (Horizontal ListView)
-                // ==========================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1184,7 +1125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-
                 SizedBox(
                   height: 90,
                   child: ListView.separated(
@@ -1215,10 +1155,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // ==========================================
-                // 5. PRODUCTS SECTION HEADER
-                // ==========================================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1320,9 +1256,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                // ==========================================
-                // LIVE PRODUCT GRID / STATES
-                // ==========================================
                 if (_isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 50),
@@ -1362,9 +1295,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   )
-                // ==========================================
-                // 6. PRODUCT GRID
-                // ==========================================
                 else if (_filteredProducts.isEmpty)
                   Center(
                     child: Padding(
