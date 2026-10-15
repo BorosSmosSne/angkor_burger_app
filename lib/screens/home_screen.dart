@@ -19,6 +19,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:angkor_burger_app/screens/burger_menu_screen.dart';
 import 'package:angkor_burger_app/screens/staff_kitchen_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,6 +60,29 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _fetchLiveProducts();
+    _checkStaffRedirect();
+  }
+
+  Future<void> _checkStaffRedirect() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final prefs = await SharedPreferences.getInstance();
+      final savedRole = (prefs.getString('angkor.pos.user_role') ??
+              prefs.getString('user_role') ??
+              UserProfileManager.profileNotifier.value.role)
+          .toLowerCase();
+
+      // If logged in user is 'staff', redirect immediately to BurgerMenuScreen (Catalog & Orders)
+      if (savedRole == 'staff' ||
+          RestApi.currentUserRole.toLowerCase() == 'staff') {
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+            (route) => false,
+          );
+        }
+      }
+    });
   }
 
   Future<void> _fetchLiveProducts() async {
@@ -846,15 +870,23 @@ class _HomeScreenState extends State<HomeScreen> {
             onNavigateToTab: _onBottomNavTapped,
             onContinueShopping: () => _onBottomNavTapped(0),
           ),
+          // Inside IndexedStack children: [...]
           ValueListenableBuilder<UserProfileModel>(
             valueListenable: UserProfileManager.profileNotifier,
             builder: (context, profile, _) {
               final role = profile.role.toLowerCase();
-              if (role == 'admin' ||
-                  role == 'staff' ||
-                  UserProfileManager.isAdmin) {
+              final bool isStaffOrAdmin = role == 'staff' ||
+                  role == 'admin' ||
+                  RestApi.currentUserRole.toLowerCase() == 'staff' ||
+                  RestApi.currentUserRole.toLowerCase() == 'admin' ||
+                  UserProfileManager.isAdmin;
+
+              // 1. STAFF / ADMIN -> See the Kitchen Action Controller ([Accept], [Ready for Pickup], [Finish], [Cancel])
+              if (isStaffOrAdmin) {
                 return const StaffKitchenScreen();
               }
+
+              // 2. CUSTOMER -> See their live order timeline
               return OrderScreen(
                 cartItems: _cartItems,
                 onAddToCart: _addToCart,

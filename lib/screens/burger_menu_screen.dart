@@ -29,8 +29,23 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   String _searchQuery = '';
   String _selectedCategory = 'All Items';
   String _currentSort = 'Newest';
-  int _currentBottomNavIndex = 1;
-  // 1. Quick Test Login (sets the token and goes to Customer HomeScreen)
+
+  // ✅ FIX 1: Start on Catalog tab (index 0 for Staff, index 1 for Admin)
+  int _currentBottomNavIndex = 0;
+
+  bool get _isAdmin {
+    return UserProfileManager.isAdmin ||
+        RestApi.currentUserRole.toLowerCase() == 'admin';
+  }
+
+  // Helper to check if the "Orders" tab is currently active
+  bool get _isOrdersTabSelected {
+    if (!_isAdmin) {
+      return _currentBottomNavIndex == 1; // Staff: 0 = Catalog, 1 = Orders
+    }
+    return _currentBottomNavIndex == 3; // Admin: 3 = Orders
+  }
+
   Future<void> _quickTestLogin() async {
     final preferences = await SharedPreferences.getInstance();
     const testToken =
@@ -38,36 +53,18 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     await preferences.setString('angkor.pos.token', testToken);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('⚡ Quick logged in as Test Admin'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   }
 
-  // 2. Quick Test Logout (removes the token and takes you to AuthScreen)
   Future<void> _quickTestLogout() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove('angkor.pos.token');
-
     await UserProfileManager.reset();
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Logged out successfully'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (context) => const AuthScreen(initialIsSignUp: false),
@@ -79,12 +76,12 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   @override
   void initState() {
     super.initState();
+    _currentBottomNavIndex = _isAdmin ? 1 : 0; // Highlight "Catalog" by default
     _loadProducts();
   }
 
   void _loadProducts() {
     setState(() {
-      // 1. Fetch real category count directly from Laravel GET /api/categories
       RestApi.fetchCategories().then((categories) {
         if (mounted && categories.isNotEmpty) {
           setState(() {
@@ -93,7 +90,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         }
       });
 
-      // 2. Fetch products
       _productsFuture = RestApi.fetchProducts().then((data) {
         _allProducts = data;
         _applyFilters();
@@ -102,7 +98,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     });
   }
 
-  // Extract all unique categories dynamically from the loaded products
   List<String> get _dynamicCategories {
     final Map<String, String> uniqueMap = {};
     for (final p in _allProducts) {
@@ -122,7 +117,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   void _applyFilters() {
     List<ProductModel> temp = List.from(_allProducts);
 
-    // 1. Dynamic Category Filter
     if (_selectedCategory != 'All Items') {
       temp = temp
           .where((p) =>
@@ -131,7 +125,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           .toList();
     }
 
-    // 2. Search Query Filter
     if (_searchQuery.trim().isNotEmpty) {
       final q = _searchQuery.toLowerCase().trim();
       temp = temp
@@ -142,7 +135,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           .toList();
     }
 
-    // 3. Sorting Logic
     switch (_currentSort) {
       case 'Newest':
         temp.sort((a, b) => b.id.compareTo(a.id));
@@ -197,10 +189,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           const SnackBar(content: Text('Item deleted successfully')),
         );
         _loadProducts();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Delete failed.')),
-        );
       }
     }
   }
@@ -210,92 +198,97 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: _buildTopAppBar(),
-      body: RefreshIndicator(
-        onRefresh: () async => _loadProducts(),
-        color: burgundy,
-        child: FutureBuilder<List<ProductModel>>(
-          future: _productsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                _allProducts.isEmpty) {
-              return const Center(
-                  child: CircularProgressIndicator(color: burgundy));
-            } else if (snapshot.hasError && _allProducts.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                      'Connection Error: ${snapshot.error}\n\nPlease check your Laravel API.'),
-                ),
-              );
-            }
+      // ✅ FIX 3: Switch between Catalog and Orders in-place without Navigator.push
+      body: IndexedStack(
+        index: _isOrdersTabSelected ? 1 : 0,
+        children: [
+          _buildCatalogTabBody(),
+          const StaffKitchenScreen(showAppBar: false),
+        ],
+      ),
+      // Only show the '+' button when on the Catalog tab
+      floatingActionButton: !_isOrdersTabSelected
+          ? FloatingActionButton(
+              backgroundColor: burgundy,
+              shape: const CircleBorder(),
+              elevation: 4,
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AddProductScreen()),
+                );
+                if (result == true) _loadProducts();
+              },
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
 
-            final totalCount = _allProducts.length;
-
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Live API Status Banner
-                  _buildLiveApiCard(totalCount),
-                  const SizedBox(height: 12),
-
-                  // 2. Metrics 2x2 Grid (Passes no arguments)
-                  _buildMetricsRow(),
-                  const SizedBox(height: 14),
-
-                  // 3. Search Bar
-                  _buildSearchBar(),
-                  const SizedBox(height: 12),
-
-                  // 4. Dynamic Category Filter Tabs
-                  _buildCategoryFilterRow(totalCount),
-                  const SizedBox(height: 16),
-
-                  // 5. Catalog List Header & Sort (with bounded, hit-testable popup button)
-                  _buildCatalogHeader(),
-
-                  const SizedBox(height: 8),
-                  if (_filteredProducts.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text('No menu items found for this filter.',
-                            style: TextStyle(color: Colors.grey)),
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(_filteredProducts[index]);
-                      },
-                    ),
-                  const SizedBox(height: 80),
-                ],
+  Widget _buildCatalogTabBody() {
+    return RefreshIndicator(
+      onRefresh: () async => _loadProducts(),
+      color: burgundy,
+      child: FutureBuilder<List<ProductModel>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _allProducts.isEmpty) {
+            return const Center(
+                child: CircularProgressIndicator(color: burgundy));
+          } else if (snapshot.hasError && _allProducts.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                    'Connection Error: ${snapshot.error}\n\nPlease check your Laravel API.'),
               ),
             );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: burgundy,
-        shape: const CircleBorder(),
-        elevation: 4,
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddProductScreen()),
+          }
+
+          final totalCount = _allProducts.length;
+
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLiveApiCard(totalCount),
+                const SizedBox(height: 12),
+                _buildMetricsRow(),
+                const SizedBox(height: 14),
+                _buildSearchBar(),
+                const SizedBox(height: 12),
+                _buildCategoryFilterRow(totalCount),
+                const SizedBox(height: 16),
+                _buildCatalogHeader(),
+                const SizedBox(height: 8),
+                if (_filteredProducts.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text('No menu items found for this filter.',
+                          style: TextStyle(color: Colors.grey)),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      return _buildProductCard(_filteredProducts[index]);
+                    },
+                  ),
+                const SizedBox(height: 80),
+              ],
+            ),
           );
-          if (result == true) _loadProducts();
         },
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -304,6 +297,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       titleSpacing: 16,
+      automaticallyImplyLeading: false,
       title: Row(
         children: [
           Container(
@@ -316,18 +310,23 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                 const Icon(Icons.lunch_dining, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 10),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('ANGKOR BURGER',
+              const Text('ANGKOR BURGER',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       color: burgundy,
                       letterSpacing: 0.5)),
-              Text('Menu Catalog',
-                  style: TextStyle(
+              Text(
+                  _isOrdersTabSelected
+                      ? 'Kitchen & Orders Display'
+                      : (_isAdmin
+                          ? 'Menu Catalog (Admin)'
+                          : 'Staff Menu Catalog'),
+                  style: const TextStyle(
                       fontSize: 12,
                       color: Colors.black54,
                       fontWeight: FontWeight.w500)),
@@ -336,8 +335,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         ],
       ),
       actions: [
-        // 1. Staff Management button (Visible to ADMIN ONLY)
-        if (UserProfileManager.isAdmin)
+        if (_isAdmin)
           IconButton(
             tooltip: 'Staff Management',
             icon: const Icon(Icons.badge_outlined, color: burgundy),
@@ -350,32 +348,29 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               );
             },
           ),
+
+        // Quick toggle icon between Catalog and Orders
         IconButton(
-          tooltip: 'Open Customer Home Screen',
-          icon: const Icon(Icons.notifications_none, color: Colors.black87),
+          icon: Icon(
+            _isOrdersTabSelected
+                ? Icons.restaurant_menu
+                : Icons.assignment_ind_outlined,
+            color: burgundy,
+          ),
+          tooltip: _isOrdersTabSelected ? 'Back to Catalog' : 'Kitchen Orders',
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-            );
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.assignment_ind_outlined,
-              color: Color(0xFF7A1C1C)),
-          tooltip: 'Kitchen & Orders Control',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const StaffKitchenScreen()),
-            );
+            setState(() {
+              if (!_isAdmin) {
+                _currentBottomNavIndex = _isOrdersTabSelected ? 0 : 1;
+              } else {
+                _currentBottomNavIndex = _isOrdersTabSelected ? 1 : 3;
+              }
+            });
           },
         ),
 
-        // Quick Auth & Test Menu
         PopupMenuButton<String>(
-          tooltip: 'Auth & Testing',
+          tooltip: 'Account Menu',
           icon: const CircleAvatar(
             radius: 16,
             backgroundColor: burgundy,
@@ -393,24 +388,23 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                 MaterialPageRoute(
                     builder: (context) => const StaffManagementScreen()),
               );
-            } else if (value == 'login') {
-              _quickTestLogin();
             } else if (value == 'logout') {
               _quickTestLogout();
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'home',
-              child: Row(
-                children: [
-                  Icon(Icons.home_outlined, color: Colors.black87, size: 18),
-                  SizedBox(width: 8),
-                  Text('Open Home Screen', style: TextStyle(fontSize: 13)),
-                ],
+            if (_isAdmin)
+              const PopupMenuItem(
+                value: 'home',
+                child: Row(
+                  children: [
+                    Icon(Icons.home_outlined, color: Colors.black87, size: 18),
+                    SizedBox(width: 8),
+                    Text('Customer View', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
               ),
-            ),
-            if (UserProfileManager.isAdmin)
+            if (_isAdmin)
               const PopupMenuItem(
                 value: 'staff',
                 child: Row(
@@ -421,18 +415,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                   ],
                 ),
               ),
-            const PopupMenuItem(
-              value: 'login',
-              child: Row(
-                children: [
-                  Icon(Icons.bolt, color: Colors.green, size: 18),
-                  SizedBox(width: 8),
-                  Text('Quick Test Login',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
             const PopupMenuItem(
               value: 'logout',
               child: Row(
@@ -447,14 +429,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           ],
         ),
         const SizedBox(width: 8),
-        // const Padding(
-        //   padding: EdgeInsets.only(right: 14),
-        //   child: CircleAvatar(
-        //     radius: 16,
-        //     backgroundColor: burgundy,
-        //     child: Icon(Icons.person, color: Colors.white, size: 18),
-        //   ),
-        // ),
       ],
     );
   }
@@ -515,11 +489,8 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
-  // 2x2 Grid that calculates its counts internally with bounded Flexible widgets
   Widget _buildMetricsRow() {
     final totalCount = _allProducts.length;
-
-    // Use live database count; fall back to product categories if 0
     final realCategoryCount = _totalBackendCategories > 0
         ? _totalBackendCategories
         : _dynamicCategories.length;
@@ -527,8 +498,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     final activeCount = _allProducts.where((p) => p.isActive).length;
     final inactiveCount = _allProducts.where((p) => !p.isActive).length;
     final popularCount = _allProducts.where((p) => p.isPopular).length;
-
-    // Kitchen Inventory Counts:
     final inStockCount = _allProducts.where((p) => p.isInStock).length;
     final outOfStockCount = _allProducts.where((p) => !p.isInStock).length;
 
@@ -732,11 +701,8 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: [
-          // 1. "All Items" Pill
           _buildPill('All Items ($totalCount)', 'All Items'),
           const SizedBox(width: 8),
-
-          // 2. Dynamically Generated Pills for each category in the database
           ...categories.map((cat) {
             final count = _allProducts
                 .where(
@@ -810,7 +776,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
             ),
           ],
         ),
-        // Explicit hit-testable container with bounded constraints to prevent render box hit test crashes
         Container(
           constraints: const BoxConstraints(minHeight: 32),
           child: PopupMenuButton<String>(
@@ -1040,51 +1005,14 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
-  // Widget _buildBurgerImage(String path) {
-  //   final clean = path.trim();
-
-  //   if (clean.startsWith('http://') || clean.startsWith('https://')) {
-  //     final safeUrl = Uri.encodeFull(clean);
-  //     return Image.network(
-  //       safeUrl,
-  //       fit: BoxFit.cover,
-  //       errorBuilder: (_, __, ___) => const CircleAvatar(
-  //         backgroundColor: Color(0xFFFFECB3),
-  //         child: Icon(Icons.lunch_dining, color: Colors.brown, size: 20),
-  //       ),
-  //     );
-  //   }
-
-  //   String assetPath = clean;
-  //   if (assetPath.startsWith('assets/assets/')) {
-  //     assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
-  //   } else if (!assetPath.startsWith('assets/')) {
-  //     assetPath = 'assets/$assetPath';
-  //   }
-
-  //   if (assetPath.contains('burger.png') ||
-  //       assetPath.contains('wings.png') ||
-  //       assetPath.isEmpty) {
-  //     assetPath = 'assets/images/imagelist1.jpg';
-  //   }
-
-  //   return Image.asset(
-  //     assetPath,
-  //     fit: BoxFit.cover,
-  //     errorBuilder: (_, __, ___) =>
-  //         Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
-  //   );
-  // }
   Widget _buildBurgerImage(String path) {
     String clean = path.trim();
 
-    // 1. Network image from Laravel server
     if (clean.startsWith('http://') || clean.startsWith('https://')) {
-      // Map localhost/127.0.0.1 to 10.0.2.2 on Android emulator
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         clean = clean
-            .replaceAll('127.0.0.1', '10.0.2.2')
-            .replaceAll('localhost', '10.0.2.2');
+            .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
+            .replaceAll('localhost:8000', '10.0.2.2:8000');
       }
 
       final safeUrl = Uri.encodeFull(clean);
@@ -1094,7 +1022,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         fit: BoxFit.cover,
         fadeInDuration: const Duration(milliseconds: 200),
         fadeOutDuration: const Duration(milliseconds: 100),
-        // Clean, instant soft placeholder instead of a distracting spinner
         placeholder: (context, url) => Container(
           color: const Color(0xFFFDEEEC),
           child: const Center(
@@ -1108,7 +1035,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       );
     }
 
-    // 2. Local Asset
     String assetPath = clean;
     if (assetPath.startsWith('assets/assets/')) {
       assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
@@ -1132,7 +1058,29 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
+  // ✅ BOTTOM NAV: Switches tabs in-place without Navigator.push
   Widget _buildBottomNav() {
+    if (!_isAdmin) {
+      return BottomNavigationBar(
+        currentIndex: _currentBottomNavIndex > 1 ? 0 : _currentBottomNavIndex,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: burgundy,
+        unselectedItemColor: Colors.grey,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        onTap: (index) {
+          setState(() => _currentBottomNavIndex = index);
+        },
+        items: const [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.restaurant_menu), label: 'Catalog'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),
+        ],
+      );
+    }
+
     return BottomNavigationBar(
       currentIndex: _currentBottomNavIndex,
       type: BottomNavigationBarType.fixed,
@@ -1142,14 +1090,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       selectedFontSize: 10,
       unselectedFontSize: 10,
       onTap: (index) {
-        if (index == 3) {
-          // TAB 3: PUSH DIRECTLY TO STAFF KITCHEN SCREEN
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const StaffKitchenScreen()),
-          );
-        } else if (index == 0) {
-          // TAB 0: GO TO CUSTOMER HOME SCREEN
+        if (index == 0) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const HomeScreen()),

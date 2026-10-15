@@ -1,5 +1,8 @@
+import 'package:angkor_burger_app/data/user_profile_manager.dart';
+import 'package:angkor_burger_app/screens/burger_menu_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/welcome_screen.dart';
+import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -46,14 +49,24 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkAuthAndNavigate() async {
     String? token;
+    String savedRole = 'customer';
+
     try {
       final SharedPreferences preferences =
           await SharedPreferences.getInstance();
       token = preferences.getString('angkor.pos.token');
+
+      // Read role directly from SharedPreferences or UserProfileManager
+      savedRole = (preferences.getString('angkor.pos.user_role') ??
+              preferences.getString('user_role') ??
+              UserProfileManager.profileNotifier.value.role)
+          .toLowerCase();
+
+      RestApi.currentUserRole = savedRole;
     } catch (e) {
       debugPrint('Error reading SharedPreferences: $e');
     }
-    
+
     final bool hasValidToken = token != null && token.trim().isNotEmpty;
 
     await Future.delayed(const Duration(milliseconds: 1800));
@@ -61,9 +74,19 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (hasValidToken) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // Route Staff and Admin directly to BurgerMenuScreen
+      if (savedRole == 'admin' ||
+          savedRole == 'staff' ||
+          UserProfileManager.isAdmin) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+        );
+      } else {
+        // Route Customer to HomeScreen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     } else {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
