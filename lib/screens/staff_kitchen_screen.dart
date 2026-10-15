@@ -20,15 +20,13 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
   static const Color burgundy = Color(0xFF7A1C1C);
   List<dynamic> _kitchenOrders = [];
   bool _isLoading = true;
+  int? _updatingOrderId;
   Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
-    // ✅ FIX 2: Fetch orders immediately on mount so you never have to click reload!
     _fetchKitchenOrders(silent: false);
-
-    // Poll every 4 seconds to keep orders updated automatically
     _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       _fetchKitchenOrders(silent: true);
     });
@@ -71,6 +69,7 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
   }
 
   Future<void> _updateOrderStatus(int orderId, String newStatus) async {
+    setState(() => _updatingOrderId = orderId);
     try {
       final response = await http.patch(
         Uri.parse('${RestApi.baseUrl}/orders/$orderId/status'),
@@ -82,10 +81,14 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
       );
 
       if (response.statusCode == 200) {
-        _fetchKitchenOrders(silent: true);
+        await _fetchKitchenOrders(silent: true);
       }
     } catch (e) {
       debugPrint('Error updating order status: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _updatingOrderId = null);
+      }
     }
   }
 
@@ -166,8 +169,10 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
     final int id = order['id'] is int
         ? order['id']
         : int.tryParse(order['id'].toString()) ?? 0;
+    final bool isThisOrderUpdating = _updatingOrderId == id;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -262,14 +267,51 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: (status == 'completed' || status == 'cancelled')
+                  onPressed: (status == 'completed' ||
+                          status == 'cancelled' ||
+                          isThisOrderUpdating)
                       ? null
-                      : () => _updateOrderStatus(id, 'cancelled'),
+                      : () async {
+                          // Confirm cancellation explicitly to prevent accidental clicks
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Cancel Order'),
+                              content: Text(
+                                  'Are you sure you want to cancel Order #$id?'),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('No')),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Yes, Cancel',
+                                      style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            await _updateOrderStatus(id, 'cancelled');
+                          }
+                        },
                   child: const Text('Cancel'),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.check, size: 16, color: Colors.white),
+                  icon: isThisOrderUpdating
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check, size: 16, color: Colors.white),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
                         status == 'cooking' ? Colors.grey : burgundy,
@@ -278,7 +320,7 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: status == 'placed'
+                  onPressed: (status == 'placed' && !isThisOrderUpdating)
                       ? () => _updateOrderStatus(id, 'cooking')
                       : null,
                   label: Text(
@@ -289,8 +331,17 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.shopping_bag_outlined,
-                      size: 16, color: Colors.white),
+                  icon: isThisOrderUpdating
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.shopping_bag_outlined,
+                          size: 16, color: Colors.white),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
                     padding:
@@ -298,9 +349,10 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: (status == 'cooking' ||
-                          status == 'accepted' ||
-                          status == 'placed')
+                  onPressed: ((status == 'cooking' ||
+                              status == 'accepted' ||
+                              status == 'placed') &&
+                          !isThisOrderUpdating)
                       ? () => _updateOrderStatus(id, 'ready_to_pickup')
                       : null,
                   label: const Text(
@@ -311,8 +363,17 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  icon:
-                      const Icon(Icons.done_all, size: 16, color: Colors.white),
+                  icon: isThisOrderUpdating
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.done_all,
+                          size: 16, color: Colors.white),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF222222),
                     padding:
@@ -320,9 +381,10 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  onPressed: status == 'ready_to_pickup'
-                      ? () => _updateOrderStatus(id, 'completed')
-                      : null,
+                  onPressed:
+                      (status == 'ready_to_pickup' && !isThisOrderUpdating)
+                          ? () => _updateOrderStatus(id, 'completed')
+                          : null,
                   label: const Text(
                     'Finish',
                     style: TextStyle(
