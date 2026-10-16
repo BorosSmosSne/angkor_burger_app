@@ -36,7 +36,7 @@ class CheckoutModel {
   final String paymentMethod;
   final List<CartItem> cartItems;
   final double subtotal;
-  final double deliveryFee;
+  // final double deliveryFee;
   final double discountAmount;
   final double taxAmount;
   final double total;
@@ -46,11 +46,11 @@ class CheckoutModel {
 
   CheckoutModel({
     required this.customerInfo,
-    this.serviceType = ServiceType.delivery,
+    this.serviceType = ServiceType.pickup,
     this.paymentMethod = 'Cash',
     this.cartItems = const [],
     required this.subtotal,
-    required this.deliveryFee,
+    // required this.deliveryFee,
     this.discountAmount = 0.0,
     required this.taxAmount,
     required this.total,
@@ -61,40 +61,26 @@ class CheckoutModel {
             '#AB-${1000 + (DateTime.now().millisecondsSinceEpoch % 9000)}',
         createdAt = createdAt ?? DateTime.now();
 
-  /// Default payment methods available at Angkor Burger with images for ABA, ACLEDA, KHQR
+  /// Default payment methods: Cash, ABA Pay, and Credit Card only
   static List<PaymentMethodModel> get defaultPaymentMethods => [
-        PaymentMethodModel(
+        const PaymentMethodModel(
           id: 'cash',
           name: 'Cash',
           icon: Icons.payments_rounded,
-          brandColor: const Color(0xFF2E7D32),
+          brandColor: Color(0xFF2E7D32),
         ),
-        PaymentMethodModel(
+        const PaymentMethodModel(
           id: 'aba',
           name: 'ABA Pay',
           imagePath: 'assets/images/ABA.jpg',
           icon: Icons.account_balance_wallet_rounded,
-          brandColor: const Color(0xFF004D7A),
+          brandColor: Color(0xFF004D7A),
         ),
-        PaymentMethodModel(
-          id: 'khqr',
-          name: 'KHQR',
-          imagePath: 'assets/images/khqr.png',
-          icon: Icons.qr_code_2_rounded,
-          brandColor: const Color(0xFFE21A21),
-        ),
-        PaymentMethodModel(
-          id: 'acleda',
-          name: 'ACLEDA',
-          imagePath: 'assets/images/acleda.jpg',
-          icon: Icons.account_balance_rounded,
-          brandColor: const Color(0xFF0C2044),
-        ),
-        PaymentMethodModel(
+        const PaymentMethodModel(
           id: 'card',
           name: 'Credit Card',
           icon: Icons.credit_card_rounded,
-          brandColor: const Color(0xFF1976D2),
+          brandColor: Color(0xFF1976D2),
         ),
       ];
 
@@ -107,7 +93,7 @@ class CheckoutModel {
     return fallback;
   }
 
-  /// Helper to compute delivery fee
+  /// Helper to compute delivery fee (always 0.0 for Pickup)
   static double calculateDeliveryFee({
     required bool isDelivery,
     required double subtotal,
@@ -127,10 +113,9 @@ class CheckoutModel {
   static double calculateTotal({
     required double subtotal,
     required double discount,
-    required double deliveryFee,
+    // required double deliveryFee,
     required double tax,
   }) {
-    return (subtotal - discount + deliveryFee + tax)
-        .clamp(0.0, double.infinity);
+    return (subtotal - discount + tax).clamp(0.0, double.infinity);
   }
 }

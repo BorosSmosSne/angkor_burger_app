@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:angkor_burger_app/core/contants.dart';
+import 'package:angkor_burger_app/data/user_profile_manager.dart'; // ✅ Added import
 import 'package:angkor_burger_app/helpers/angkor_app_bar.dart';
 import 'package:angkor_burger_app/helpers/custom_bottom_nav_bar.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
@@ -68,14 +69,23 @@ class _OrderScreenState extends State<OrderScreen>
   Future<void> _fetchOrders({bool silent = false}) async {
     if (!silent) setState(() => _isLoading = true);
     try {
+      // ✅ Pass current user's email or user_id to isolate order history
+      final currentEmail =
+          UserProfileManager.profileNotifier.value.email.trim();
+      final currentUserId = RestApi.currentUserId;
+
+      final Uri uri = Uri.parse(
+        '${RestApi.baseUrl}/orders?user_id=$currentUserId&email=${Uri.encodeComponent(currentEmail)}',
+      );
+
       final response = await http.get(
-        Uri.parse('${RestApi.baseUrl}/orders'),
+        uri,
         headers: {'Accept': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final List all = decoded['data'] ?? [];
+        final List all = decoded is List ? decoded : (decoded['data'] ?? []);
 
         final active = <dynamic>[];
         final past = <dynamic>[];
@@ -97,6 +107,8 @@ class _OrderScreenState extends State<OrderScreen>
             _isLoading = false;
           });
         }
+      } else {
+        if (mounted && !silent) setState(() => _isLoading = false);
       }
     } catch (_) {
       if (mounted && !silent) setState(() => _isLoading = false);
@@ -280,11 +292,7 @@ class _OrderScreenState extends State<OrderScreen>
             ],
           ),
           const SizedBox(height: 14),
-
-          // Stepper Tracker
           _buildTimelineStepper(status),
-
-          // Counter Ready Verification Alert
           if (status == 'ready_to_pickup')
             Container(
               margin: const EdgeInsets.only(top: 12),
@@ -328,7 +336,6 @@ class _OrderScreenState extends State<OrderScreen>
                 ],
               ),
             ),
-
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -350,72 +357,6 @@ class _OrderScreenState extends State<OrderScreen>
     );
   }
 
-  // Widget _buildTimelineStepper(String status) {
-  //   final steps = [
-  //     {'key': 'placed', 'title': 'Order Placed'},
-  //     {'key': 'accepted', 'title': 'Accepted'},
-  //     {'key': 'cooking', 'title': 'Preparing / Cooking'},
-  //     {'key': 'ready_to_pickup', 'title': 'Ready to Pick Up'},
-  //     {'key': 'completed', 'title': 'Finish'},
-  //   ];
-
-  //   int currentIndex = steps.indexWhere((s) => s['key'] == status);
-  //   if (currentIndex == -1) currentIndex = 0;
-
-  //   return Column(
-  //     children: List.generate(steps.length, (index) {
-  //       final isDone = index <= currentIndex;
-  //       final isCurrent = index == currentIndex;
-
-  //       return Row(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           Column(
-  //             children: [
-  //               Container(
-  //                 width: 20,
-  //                 height: 20,
-  //                 decoration: BoxDecoration(
-  //                   shape: BoxShape.circle,
-  //                   color: isDone ? AppColors.brandRed : Colors.grey.shade300,
-  //                   border: isCurrent
-  //                       ? Border.all(color: Colors.amber, width: 2.5)
-  //                       : null,
-  //                 ),
-  //                 child: isDone
-  //                     ? const Icon(Icons.check, size: 12, color: Colors.white)
-  //                     : null,
-  //               ),
-  //               if (index != steps.length - 1)
-  //                 Container(
-  //                   width: 2,
-  //                   height: 24,
-  //                   color: index < currentIndex
-  //                       ? AppColors.brandRed
-  //                       : Colors.grey.shade300,
-  //                 ),
-  //             ],
-  //           ),
-  //           const SizedBox(width: 12),
-  //           Expanded(
-  //             child: Padding(
-  //               padding: const EdgeInsets.only(top: 1.0),
-  //               child: Text(
-  //                 steps[index]['title']!,
-  //                 style: TextStyle(
-  //                   fontSize: 13,
-  //                   fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-  //                   color: isDone ? Colors.black87 : Colors.grey.shade500,
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       );
-  //     }),
-  //   );
-  // }
-
   Widget _buildTimelineStepper(String status) {
     final steps = [
       {'key': 'placed', 'title': 'Order Placed'},
@@ -426,11 +367,11 @@ class _OrderScreenState extends State<OrderScreen>
 
     int currentIndex = 0;
     if (status == 'accepted' || status == 'cooking') {
-      currentIndex = 1; // Highlights "Accepted & Preparing"
+      currentIndex = 1;
     } else if (status == 'ready_to_pickup') {
-      currentIndex = 2; // Highlights "Ready to Pick Up"
+      currentIndex = 2;
     } else if (status == 'completed') {
-      currentIndex = 3; // Highlights "Finish"
+      currentIndex = 3;
     }
 
     return Column(
@@ -491,8 +432,20 @@ class _OrderScreenState extends State<OrderScreen>
   Widget _buildPastOrdersTab() {
     if (_pastOrders.isEmpty) {
       return Center(
-        child: Text('No past orders yet',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history_outlined, size: 72, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            const Text(
+              'No Past Orders Yet',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text('Your completed and cancelled orders will show here.',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+          ],
+        ),
       );
     }
 

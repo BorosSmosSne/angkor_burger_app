@@ -703,7 +703,7 @@ class _CartScreenState extends State<CartScreen> {
                   builder: (context) => CheckoutScreen(
                     cartItems: widget.cartItems,
                     subtotal: _subtotal,
-                    deliveryFee: _deliveryFee,
+                    // deliveryFee: _deliveryFee,
                     discountAmount: _discountAmount,
                     taxAmount: _taxAmount,
                     total: _totalPrice,
