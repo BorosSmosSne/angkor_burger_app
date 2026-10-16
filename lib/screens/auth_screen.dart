@@ -395,6 +395,69 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
+  // Future<void> login() async {
+  //   final email = _emailController.text.trim();
+  //   final password = _passwordController.text.trim();
+
+  //   if (email.isEmpty || password.isEmpty) {
+  //     _showErrorDialog('Please enter your email and password.');
+  //     return;
+  //   }
+
+  //   setState(() => _isLoading = true);
+
+  //   try {
+  //     final userCredential =
+  //         await FirebaseAuth.instance.signInWithEmailAndPassword(
+  //       email: email,
+  //       password: password,
+  //     );
+
+  //     final idToken = await userCredential.user?.getIdToken();
+  //     if (idToken != null) {
+  //       await saveCredentials(User(token: idToken, email: email));
+  //     }
+
+  //     final backendUser = await RestApi.fetchUserProfile(email);
+  //     final String role =
+  //         backendUser?['role']?.toString().toLowerCase() ?? 'customer';
+
+  //     RestApi.currentUserRole = role;
+  //     await UserProfileManager.saveUserRole(role);
+  //     UserProfileManager.updateProfile(
+  //       name:
+  //           backendUser?['name'] ?? userCredential.user?.displayName ?? 'User',
+  //       email: email,
+  //       phone: backendUser?['phone'] ?? userCredential.user?.phoneNumber ?? '',
+  //       role: role,
+  //     );
+
+  //     if (!mounted) return;
+
+  //     if (role == 'admin' || role == 'staff') {
+  //       Navigator.pushAndRemoveUntil(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+  //         (route) => false,
+  //       );
+  //     } else {
+  //       Navigator.pushAndRemoveUntil(
+  //         context,
+  //         MaterialPageRoute(builder: (context) => const HomeScreen()),
+  //         (route) => false,
+  //       );
+  //     }
+  //   } on FirebaseAuthException catch (e) {
+  //     _showErrorDialog(_getAuthErrorMessage(e));
+  //   } catch (e) {
+  //     _showErrorDialog('An unexpected error occurred. Please try again.');
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() => _isLoading = false);
+  //     }
+  //   }
+  // }
+
   Future<void> login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -407,6 +470,7 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
+      // 1. First attempt Firebase Authentication
       final userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -447,8 +511,41 @@ class _AuthScreenState extends State<AuthScreen>
           (route) => false,
         );
       }
-    } on FirebaseAuthException catch (e) {
-      _showErrorDialog(_getAuthErrorMessage(e));
+    } on FirebaseAuthException catch (_) {
+      // 2. Fallback: If Firebase rejected (e.g. staff password changed in MySQL), authenticate via Laravel!
+      final result = await RestApi.loginUser(email: email, password: password);
+
+      if (result['success'] == true) {
+        final role = result['role'] ?? 'staff';
+        await saveCredentials(User(token: 'laravel_token', email: email));
+        RestApi.currentUserRole = role;
+        await UserProfileManager.saveUserRole(role);
+        UserProfileManager.updateProfile(
+          name: result['user']?['name'] ?? 'Staff',
+          email: email,
+          phone: result['user']?['phone'] ?? '',
+          role: role,
+        );
+
+        if (!mounted) return;
+
+        if (role == 'admin' || role == 'staff') {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+        return;
+      }
+
+      _showErrorDialog('Incorrect email or password.');
     } catch (e) {
       _showErrorDialog('An unexpected error occurred. Please try again.');
     } finally {

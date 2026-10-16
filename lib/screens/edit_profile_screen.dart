@@ -309,12 +309,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final phone = _phoneController.text.trim();
+
+    if (phone.isNotEmpty) {
+      final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+      if (cleanPhone.length < 8 || cleanPhone.length > 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone number must be between 8 and 10 digits'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
 
     final bool isImageCleared =
         _selectedImagePath == null && _selectedImageBytes == null;
 
     final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
+    // final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
     final address = _addressController.text.trim();
 
@@ -339,6 +354,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       gender: _selectedGender,
       dateOfBirth: _dateOfBirth,
     );
+
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -383,7 +400,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Current temporary profile preview
     final previewProfile = UserProfileModel(
       name: _nameController.text.isNotEmpty ? _nameController.text : 'User',
       phone: _phoneController.text,
@@ -400,14 +416,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: AppColors.brandColor,
       body: Column(
         children: [
-          // Custom Angkor Burger App Bar
-          AngkorAppBar(
+          const AngkorAppBar(
             title: 'EDIT PROFILE',
             showBackButton: true,
             showFavorite: false,
           ),
-
-          // Form Scrollable Body
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -469,7 +482,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Phone Number Field
+                          // Phone Number Field (Limits input to digits only & 8-10 length check)
                           _buildInputField(
                             label: 'Phone Number',
                             controller: _phoneController,
@@ -484,14 +497,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               if (val == null || val.trim().isEmpty) {
                                 return 'Please enter your phone number';
                               }
-                              final trimmed = val.trim();
-
-                              final phoneRegex = RegExp(r'^0[0-9]{7,8}$');
-
-                              if (!phoneRegex.hasMatch(trimmed)) {
-                                return 'Phone number must start with 0 and be 8-9 digits (e.g. 012345678)';
+                              final clean = val.replaceAll(RegExp(r'\D'), '');
+                              if (clean.length < 8 || clean.length > 10) {
+                                return 'Phone must be between 8 and 10 digits';
                               }
-
+                              if (!clean.startsWith('0')) {
+                                return 'Phone number must start with 0';
+                              }
                               return null;
                             },
                           ),
@@ -873,6 +885,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // ✅ inputFormatters is now wired directly into TextFormField
   Widget _buildInputField({
     required String label,
     required TextEditingController controller,
@@ -898,6 +911,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters, // ✅ Passed to TextFormField
           maxLines: maxLines,
           validator: validator,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),

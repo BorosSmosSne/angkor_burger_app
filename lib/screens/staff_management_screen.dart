@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import '../services/rest_api.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -34,7 +32,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     }
   }
 
-// --- 1. EDIT / RESET PASSWORD MODAL ---
+  // --- 1. EDIT / RESET PASSWORD MODAL ---
   void _showEditStaffDialog(dynamic staff) {
     final nameCtrl = TextEditingController(text: staff['name'] ?? '');
     final emailCtrl = TextEditingController(text: staff['email'] ?? '');
@@ -97,15 +95,29 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
 
               setState(() => _isLoading = true);
 
+              final newPassword = passwordCtrl.text.trim();
+
+              // 1. Update in Laravel MySQL backend (updates plain_password and bcrypt hash)
               final result = await RestApi.updateStaffUser(
                 id: staff['id'],
                 name: nameCtrl.text.trim(),
                 email: emailCtrl.text.trim(),
                 phone: phoneCtrl.text.trim(),
-                newPassword: passwordCtrl.text.trim().isNotEmpty
-                    ? passwordCtrl.text.trim()
-                    : null,
+                newPassword: newPassword.isNotEmpty ? newPassword : null,
               );
+
+              // 2. If password was changed, update in Firebase as well
+              if (newPassword.isNotEmpty) {
+                try {
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser != null &&
+                      currentUser.email == emailCtrl.text.trim()) {
+                    await currentUser.updatePassword(newPassword);
+                  }
+                } catch (e) {
+                  debugPrint('Firebase password update note: $e');
+                }
+              }
 
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -225,18 +237,16 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
               if (!formKey.currentState!.validate()) return;
               Navigator.pop(ctx);
               setState(() => _isLoading = true);
-              // 1. Create staff in Firebase Auth so they can log in via AuthScreen
+
               try {
                 await FirebaseAuth.instance.createUserWithEmailAndPassword(
                   email: emailCtrl.text.trim(),
                   password: passwordCtrl.text.trim(),
                 );
               } catch (e) {
-                // If account exists in Firebase, continue to Laravel sync
                 debugPrint('Firebase registration note: $e');
               }
 
-              // 2. Persist staff record with 'staff' role in Laravel MySQL
               final result = await RestApi.createStaffUser(
                 name: nameCtrl.text.trim(),
                 email: emailCtrl.text.trim(),
@@ -283,10 +293,9 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                   itemBuilder: (context, index) {
                     final staff = _staffList[index];
                     return Padding(
-                      padding: EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Slidable(
                         key: ValueKey(staff['id']),
-                        // Swipe left to reveal Edit & Delete
                         endActionPane: ActionPane(
                           motion: const DrawerMotion(),
                           children: [

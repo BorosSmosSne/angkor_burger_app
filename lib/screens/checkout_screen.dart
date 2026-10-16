@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
@@ -45,7 +46,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _selectedPayment = 'Cash';
   final String _selectedPickupTime = 'ASAP (~5 mins)';
 
-  List<PaymentMethodModel> get _paymentMethods => CheckoutModel.defaultPaymentMethods;
+  List<PaymentMethodModel> get _paymentMethods =>
+      CheckoutModel.defaultPaymentMethods;
 
   late final TextEditingController _nameController =
       TextEditingController(text: UserProfileManager.currentProfile.name);
@@ -120,11 +122,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
       return;
     }
-    if (_phoneController.text.trim().isEmpty) {
+
+    // ✅ Enforce 8 to 10 digits validation
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please enter your phone number'),
             backgroundColor: Colors.redAccent),
+      );
+      return;
+    }
+
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    if (cleanPhone.length < 8 || cleanPhone.length > 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number must be between 8 and 10 digits'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -647,10 +663,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 12),
           _buildTextField(
             label: 'Phone Number',
-            hint: 'e.g. +855 12 345 678',
+            hint: 'e.g. 012345678',
             controller: _phoneController,
             prefixIcon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10), // Caps at 10 digits
+            ],
           ),
         ],
       ),
@@ -680,12 +700,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             decoration: BoxDecoration(
               color: AppColors.brandLightRed,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: AppColors.brandRed.withValues(alpha: 0.25)),
+              border:
+                  Border.all(color: AppColors.brandRed.withValues(alpha: 0.25)),
             ),
             child: const Row(
               children: [
-                Icon(Icons.storefront_rounded, color: AppColors.brandRed, size: 24),
+                Icon(Icons.storefront_rounded,
+                    color: AppColors.brandRed, size: 24),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -797,8 +818,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               isLight: true,
               valueColor: Colors.green.shade700,
             ),
-          _buildSummaryRow(
-              'Tax (8%)', '\$${_calculatedTax.toStringAsFixed(2)}',
+          _buildSummaryRow('Tax (8%)', '\$${_calculatedTax.toStringAsFixed(2)}',
               isLight: true),
           const Divider(height: 24),
           Row(
@@ -809,12 +829,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
                       color: AppColors.brandRed)),
-              Text(
-                '\$${_calculatedTotal.toStringAsFixed(2)}',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                    color: AppColors.brandRed)),
+              Text('\$${_calculatedTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      color: AppColors.brandRed)),
             ],
           ),
           const SizedBox(height: 16),
@@ -825,8 +844,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   controller: _promoController,
                   decoration: InputDecoration(
                     hintText: 'Promo Code (e.g. ANGKOR10)',
-                    hintStyle: TextStyle(
-                        color: Colors.grey.shade400, fontSize: 13),
+                    hintStyle:
+                        TextStyle(color: Colors.grey.shade400, fontSize: 13),
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
@@ -844,8 +863,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   backgroundColor: Colors.black87,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 12, horizontal: 18),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
                 ),
                 child: const Text('Apply',
                     style: TextStyle(
@@ -969,6 +988,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required TextEditingController controller,
     IconData? prefixIcon,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -982,6 +1002,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
