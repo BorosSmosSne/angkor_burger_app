@@ -1,4 +1,5 @@
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
+import 'package:angkor_burger_app/models/user_profile_model.dart';
 import 'package:angkor_burger_app/screens/staff_kitchen_screen.dart';
 import 'package:angkor_burger_app/screens/staff_management_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -30,7 +31,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   String _selectedCategory = 'All Items';
   String _currentSort = 'Newest';
 
-  // ✅ FIX 1: Start on Catalog tab (index 0 for Staff, index 1 for Admin)
+  // 0 = Catalog, 1 = Orders (Consistent for both Admin and Staff)
   int _currentBottomNavIndex = 0;
 
   bool get _isAdmin {
@@ -38,26 +39,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         RestApi.currentUserRole.toLowerCase() == 'admin';
   }
 
-  // Helper to check if the "Orders" tab is currently active
-  bool get _isOrdersTabSelected {
-    if (!_isAdmin) {
-      return _currentBottomNavIndex == 1; // Staff: 0 = Catalog, 1 = Orders
-    }
-    return _currentBottomNavIndex == 3; // Admin: 3 = Orders
-  }
-
-  Future<void> _quickTestLogin() async {
-    final preferences = await SharedPreferences.getInstance();
-    const testToken =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE4MDAwMDAwMDB9.6n4w6_uCgMbeuY7Vp_tHhUksL8Pq8wW7Fk1Z6_9_1z2';
-    await preferences.setString('angkor.pos.token', testToken);
-
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
-    );
-  }
+  bool get _isOrdersTabSelected => _currentBottomNavIndex == 1;
 
   Future<void> _quickTestLogout() async {
     final preferences = await SharedPreferences.getInstance();
@@ -76,7 +58,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   @override
   void initState() {
     super.initState();
-    _currentBottomNavIndex = _isAdmin ? 1 : 0; // Highlight "Catalog" by default
+    _currentBottomNavIndex = 0; // Always start on Catalog
     _loadProducts();
   }
 
@@ -198,16 +180,31 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: _buildTopAppBar(),
-      // ✅ FIX 3: Switch between Catalog and Orders in-place without Navigator.push
       body: IndexedStack(
-        index: _isOrdersTabSelected ? 1 : 0,
+        index: _currentBottomNavIndex,
         children: [
           _buildCatalogTabBody(),
           const StaffKitchenScreen(showAppBar: false),
         ],
       ),
-      // Only show the '+' button when on the Catalog tab
-      floatingActionButton: !_isOrdersTabSelected
+      // floatingActionButton: _currentBottomNavIndex == 0 && _isAdmin
+      //     ? FloatingActionButton(
+      //         backgroundColor: burgundy,
+      //         shape: const CircleBorder(),
+      //         elevation: 4,
+      //         onPressed: () async {
+      //           final result = await Navigator.push(
+      //             context,
+      //             MaterialPageRoute(
+      //                 builder: (context) => const AddProductScreen()),
+      //           );
+      //           if (result == true) _loadProducts();
+      //         },
+      //         child: const Icon(Icons.add, color: Colors.white, size: 28),
+      //       )
+      //     : null,
+      // To (Visible whenever on Catalog tab):
+      floatingActionButton: _currentBottomNavIndex == 0
           ? FloatingActionButton(
               backgroundColor: burgundy,
               shape: const CircleBorder(),
@@ -320,16 +317,58 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                       fontWeight: FontWeight.w800,
                       color: burgundy,
                       letterSpacing: 0.5)),
-              Text(
-                  _isOrdersTabSelected
-                      ? 'Kitchen & Orders Display'
-                      : (_isAdmin
-                          ? 'Menu Catalog (Admin)'
-                          : 'Staff Menu Catalog'),
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500)),
+              // ✅ Dynamic User Name and Role Badge
+              ValueListenableBuilder<UserProfileModel>(
+                valueListenable: UserProfileManager.profileNotifier,
+                builder: (context, profile, _) {
+                  final String displayName =
+                      profile.name.isNotEmpty ? profile.name : 'User';
+                  final String roleLabel = _isAdmin ? 'ADMIN' : 'STAFF';
+
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: _isAdmin
+                              ? const Color(0xFFFDEEEC)
+                              : Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          roleLabel,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: _isAdmin ? burgundy : Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+              // Text(
+              //     _isOrdersTabSelected
+              //         ? 'Kitchen & Orders Display'
+              //         : (_isAdmin
+              //             ? 'Menu Catalog (Admin)'
+              //             : 'Staff Menu Catalog'),
+              //     style: const TextStyle(
+              //         fontSize: 12,
+              //         color: Colors.black54,
+              //         fontWeight: FontWeight.w500)),
             ],
           ),
         ],
@@ -348,27 +387,20 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               );
             },
           ),
-
-        // Quick toggle icon between Catalog and Orders
-        IconButton(
-          icon: Icon(
-            _isOrdersTabSelected
-                ? Icons.restaurant_menu
-                : Icons.assignment_ind_outlined,
-            color: burgundy,
-          ),
-          tooltip: _isOrdersTabSelected ? 'Back to Catalog' : 'Kitchen Orders',
-          onPressed: () {
-            setState(() {
-              if (!_isAdmin) {
-                _currentBottomNavIndex = _isOrdersTabSelected ? 0 : 1;
-              } else {
-                _currentBottomNavIndex = _isOrdersTabSelected ? 1 : 3;
-              }
-            });
-          },
-        ),
-
+        // IconButton(
+        //   icon: Icon(
+        //     _isOrdersTabSelected
+        //         ? Icons.restaurant_menu
+        //         : Icons.assignment_ind_outlined,
+        //     color: burgundy,
+        //   ),
+        //   tooltip: _isOrdersTabSelected ? 'Back to Catalog' : 'Kitchen Orders',
+        //   onPressed: () {
+        //     setState(() {
+        //       _currentBottomNavIndex = _isOrdersTabSelected ? 0 : 1;
+        //     });
+        //   },
+        // ),
         PopupMenuButton<String>(
           tooltip: 'Account Menu',
           icon: const CircleAvatar(
@@ -952,6 +984,44 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               ],
             ),
           ),
+          // if (_isAdmin)
+          //   Row(
+          //     mainAxisSize: MainAxisSize.min,
+          //     children: [
+          //       InkWell(
+          //         onTap: () async {
+          //           final result = await Navigator.push(
+          //             context,
+          //             MaterialPageRoute(
+          //               builder: (context) =>
+          //                   AddProductScreen(existingProduct: burger),
+          //             ),
+          //           );
+          //           if (result == true) _loadProducts();
+          //         },
+          //         borderRadius: BorderRadius.circular(16),
+          //         child: Container(
+          //           padding: const EdgeInsets.all(6),
+          //           decoration: const BoxDecoration(
+          //               color: Color(0xFFFDEEEC), shape: BoxShape.circle),
+          //           child: const Icon(Icons.edit_outlined,
+          //               size: 14, color: burgundy),
+          //         ),
+          //       ),
+          //       const SizedBox(width: 6),
+          //       InkWell(
+          //         onTap: () => _confirmDelete(burger),
+          //         borderRadius: BorderRadius.circular(16),
+          //         child: Container(
+          //           padding: const EdgeInsets.all(6),
+          //           decoration: BoxDecoration(
+          //               color: Colors.grey.shade100, shape: BoxShape.circle),
+          //           child: const Icon(Icons.delete_outline,
+          //               size: 14, color: Colors.grey),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1058,58 +1128,29 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
-  // ✅ BOTTOM NAV: Switches tabs in-place without Navigator.push
   Widget _buildBottomNav() {
-    if (!_isAdmin) {
-      return BottomNavigationBar(
-        currentIndex: _currentBottomNavIndex > 1 ? 0 : _currentBottomNavIndex,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: burgundy,
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        onTap: (index) {
-          setState(() => _currentBottomNavIndex = index);
-        },
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_menu), label: 'Catalog'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),
-        ],
-      );
-    }
-
     return BottomNavigationBar(
       currentIndex: _currentBottomNavIndex,
       type: BottomNavigationBarType.fixed,
       backgroundColor: Colors.white,
       selectedItemColor: burgundy,
       unselectedItemColor: Colors.grey,
-      selectedFontSize: 10,
-      unselectedFontSize: 10,
+      selectedFontSize: 11,
+      unselectedFontSize: 11,
       onTap: (index) {
-        if (index == 0) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        } else {
-          setState(() => _currentBottomNavIndex = index);
-        }
+        setState(() {
+          _currentBottomNavIndex = index;
+        });
       },
       items: const [
         BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined), label: 'Overview'),
+          icon: Icon(Icons.restaurant_menu),
+          label: 'Catalog',
+        ),
         BottomNavigationBarItem(
-            icon: Icon(Icons.restaurant_menu), label: 'Catalog'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_outlined), label: 'Inventory'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined), label: 'Outlet'),
+          icon: Icon(Icons.receipt_long_outlined),
+          label: 'Orders',
+        ),
       ],
     );
   }

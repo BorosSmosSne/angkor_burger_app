@@ -5,6 +5,7 @@ import 'package:angkor_burger_app/helpers/product_card.dart';
 import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 import 'package:angkor_burger_app/screens/product_detail_screen.dart';
+import 'package:angkor_burger_app/services/rest_api.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesScreen extends StatefulWidget {
@@ -30,6 +31,20 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
+  late Future<List<ProductModel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLiveProducts();
+  }
+
+  void _loadLiveProducts() {
+    setState(() {
+      _productsFuture = RestApi.fetchProducts();
+    });
+  }
+
   void _addToCart(ProductModel product) {
     final defaultSize = product.sizePrices.containsKey('M')
         ? 'M'
@@ -45,6 +60,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${product.name} added to cart!'),
@@ -91,85 +107,137 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             onBackPressed: () => Navigator.pop(context),
           ),
 
-          // 2. Favorites List/Grid
+          // 2. Favorites List loaded from Live API
           Expanded(
-            child: ValueListenableBuilder<Set<String>>(
-              valueListenable: FavoritesManager.favoriteProductNamesNotifier,
-              builder: (context, favNames, _) {
-                final favoriteProducts =
-                    FavoritesManager.getFavoriteProducts();
-
-                if (favoriteProducts.isEmpty) {
-                  return _buildEmptyFavoritesState();
+            child: FutureBuilder<List<ProductModel>>(
+              future: _productsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.brandRed),
+                  );
                 }
 
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '${favoriteProducts.length} ${favoriteProducts.length == 1 ? "Item" : "Items"} Saved',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade700,
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.cloud_off,
+                            size: 48, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Failed to load products: ${snapshot.error}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _loadLiveProducts,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brandRed,
+                          ),
+                          child: const Text('Try Again',
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final allProducts = snapshot.data ?? [];
+
+                return ValueListenableBuilder<Set<String>>(
+                  valueListenable:
+                      FavoritesManager.favoriteProductNamesNotifier,
+                  builder: (context, favNames, _) {
+                    final favoriteProducts = allProducts
+                        .where((p) =>
+                            favNames.contains(p.name) ||
+                            favNames.contains(p.id.toString()))
+                        .toList();
+
+                    if (favoriteProducts.isEmpty) {
+                      return _buildEmptyFavoritesState();
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () async => _loadLiveProducts(),
+                      color: AppColors.brandRed,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${favoriteProducts.length} ${favoriteProducts.length == 1 ? "Item" : "Items"} Saved',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      FavoritesManager.clearFavorites();
+                                    },
+                                    icon: Icon(Icons.delete_outline_rounded,
+                                        size: 16, color: Colors.red.shade400),
+                                    label: Text(
+                                      'Clear All',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red.shade400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            TextButton.icon(
-                              onPressed: () {
-                                FavoritesManager.clearFavorites();
-                              },
-                              icon: Icon(Icons.delete_outline_rounded,
-                                  size: 16, color: Colors.red.shade400),
-                              label: Text(
-                                'Clear All',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red.shade400,
-                                ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 8),
+                            sliver: SliverGrid(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 173 / 259,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                              ),
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final product = favoriteProducts[index];
+                                  return ProductCard(
+                                    product: product,
+                                    isFavorite: true,
+                                    onTap: () => _openProductDetail(product),
+                                    onAddToCart: () => _addToCart(product),
+                                    onFavoriteChanged: (isFav) {
+                                      FavoritesManager.setFavorite(
+                                          product, isFav);
+                                    },
+                                  );
+                                },
+                                childCount: favoriteProducts.length,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SliverToBoxAdapter(
+                            child: SizedBox(height: 30),
+                          ),
+                        ],
                       ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.65,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final product = favoriteProducts[index];
-                            return ProductCard(
-                              product: product,
-                              isFavorite: true,
-                              onTap: () => _openProductDetail(product),
-                              onAddToCart: () => _addToCart(product),
-                              onFavoriteChanged: (isFav) {
-                                FavoritesManager.setFavorite(product, isFav);
-                              },
-                            );
-                          },
-                          childCount: favoriteProducts.length,
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 30),
-                    ),
-                  ],
+                    );
+                  },
                 );
               },
             ),

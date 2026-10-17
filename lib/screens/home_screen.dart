@@ -58,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    FavoritesManager.loadUserFavorites(); // Load this specific user's favorites
     _checkStaffRedirect();
     _fetchLiveProducts();
   }
@@ -927,7 +928,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Color(0xFF7A1C1C),
                         size: 22,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FavoritesScreen(
+                              cartItems: _cartItems,
+                              onAddToCart: _addToCart,
+                              onUpdateCartQuantity: _updateCartQuantity,
+                              onRemoveCartItem: _removeFromCart,
+                              onClearCart: _clearCart,
+                              onNavigateToTab: _onBottomNavTapped,
+                            ),
+                          ),
+                        ).then((_) {
+                          if (mounted) setState(() {});
+                        });
+                      },
                     ),
                   ],
                   const SizedBox(width: 8),
