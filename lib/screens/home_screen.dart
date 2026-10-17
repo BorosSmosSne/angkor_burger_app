@@ -921,29 +921,92 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-                    IconButton(
-                      tooltip: 'Favorites',
-                      icon: const Icon(
-                        Icons.favorite_border_rounded,
-                        color: Color(0xFF7A1C1C),
-                        size: 22,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FavoritesScreen(
-                              cartItems: _cartItems,
-                              onAddToCart: _addToCart,
-                              onUpdateCartQuantity: _updateCartQuantity,
-                              onRemoveCartItem: _removeFromCart,
-                              onClearCart: _clearCart,
-                              onNavigateToTab: _onBottomNavTapped,
+                    // Reactive Favorite Button with Count Badge & Color Change
+                    ValueListenableBuilder<Set<String>>(
+                      valueListenable:
+                          FavoritesManager.favoriteProductNamesNotifier,
+                      builder: (context, favNames, _) {
+                        final int count = favNames.length;
+                        final bool hasFavorites = count > 0;
+
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FavoritesScreen(
+                                  cartItems: _cartItems,
+                                  onAddToCart: _addToCart,
+                                  onUpdateCartQuantity: _updateCartQuantity,
+                                  onRemoveCartItem: _removeFromCart,
+                                  onClearCart: _clearCart,
+                                  onNavigateToTab: _onBottomNavTapped,
+                                ),
+                              ),
+                            ).then((_) {
+                              if (mounted) setState(() {});
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 8),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
+                              children: [
+                                // Circular background bubble (Peach/Pink when active, Grey when empty)
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: hasFavorites
+                                        ? const Color(0xFFFDEEEC)
+                                        : Colors.grey.shade100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    hasFavorites
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
+                                    color: hasFavorites
+                                        ? const Color(0xFF7A1C1C)
+                                        : Colors.black87,
+                                    size: 20,
+                                  ),
+                                ),
+
+                                // Red notification count badge
+                                if (hasFavorites)
+                                  Positioned(
+                                    top: -2,
+                                    right: -3,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 18,
+                                        minHeight: 18,
+                                      ),
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF7A1C1C),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '$count',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                        ).then((_) {
-                          if (mounted) setState(() {});
-                        });
+                        );
                       },
                     ),
                   ],

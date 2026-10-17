@@ -119,7 +119,7 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.w900,
             color: textColor ?? AppColors.brandRed,
             letterSpacing: 0.5,
@@ -165,9 +165,8 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
                           count > 0
                               ? Icons.favorite_rounded
                               : Icons.favorite_border_rounded,
-                          color: count > 0
-                              ? AppColors.brandRed
-                              : Colors.black87,
+                          color:
+                              count > 0 ? AppColors.brandRed : Colors.black87,
                           size: 20,
                         ),
                       ),
@@ -247,7 +246,7 @@ class AngkorAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 4),
               // Right / Actions area
               trailingSection,
             ],

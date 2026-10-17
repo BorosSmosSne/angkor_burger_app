@@ -1,5 +1,6 @@
 import 'package:angkor_burger_app/data/user_profile_manager.dart';
 import 'package:angkor_burger_app/models/user_profile_model.dart';
+import 'package:angkor_burger_app/screens/daily_sales_screen.dart';
 import 'package:angkor_burger_app/screens/staff_kitchen_screen.dart';
 import 'package:angkor_burger_app/screens/staff_management_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -536,6 +537,24 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DailySalesScreen()),
+            );
+          },
+          child: _buildMetricCard(
+            title: 'ORDERS & SALES',
+            value: 'Daily Summary',
+            subtext: 'Tap to view daily revenue & count',
+            badgeText: 'Reports',
+            badgeColor: Colors.deepOrange,
+            icon: Icons.analytics_outlined,
+          ),
+        ),
+        const SizedBox(height: 10),
         Row(
           children: [
             Flexible(
