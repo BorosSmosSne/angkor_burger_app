@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:angkor_burger_app/widgets/packaging_receipt_dialog.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -851,6 +852,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 15),
                         ),
+                      ),
+                    ),
+                    // -------------------------------------------------------------
+                    // 🧾 ADD PACKAGING RECEIPT SLIP BUTTON HERE
+                    // -------------------------------------------------------------
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.receipt_outlined, size: 16),
+                        label: const Text(
+                          'View Packaging Slip',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.brandRed,
+                          side: const BorderSide(
+                              color: AppColors.brandRed, width: 1.2),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => PackagingReceiptDialog(
+                              order: {
+                                'id': customOrderId?.replaceAll(
+                                        RegExp(r'[^0-9]'), '') ??
+                                    order.orderId,
+                                'total': order.total,
+                                'payment_method': order.paymentMethod,
+                                'payment_status':
+                                    order.paymentMethod.toLowerCase() == 'cash'
+                                        ? 'pending'
+                                        : 'paid',
+                                'service_type': 'pickup',
+                                'pickup_time_slot': 'ASAP',
+                                'items': order.cartItems
+                                    .map((item) => {
+                                          'name': item.product.name,
+                                          'quantity': item.quantity,
+                                          'price': item.product.price,
+                                        })
+                                    .toList(),
+                              },
+                              customerName: order.customerInfo.fullName,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 8),

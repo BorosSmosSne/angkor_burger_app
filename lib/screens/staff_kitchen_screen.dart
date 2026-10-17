@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:angkor_burger_app/widgets/packaging_receipt_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../services/rest_api.dart';
@@ -258,6 +259,38 @@ class _StaffKitchenScreenState extends State<StaffKitchenScreen> {
             physics: const BouncingScrollPhysics(),
             child: Row(
               children: [
+                // -----------------------------------------------------------
+                // 🧾 1. PRINT PACKAGING SLIP BUTTON (For kitchen/packaging staff)
+                // -----------------------------------------------------------
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.print_outlined,
+                      size: 16, color: Colors.white),
+                  label: const Text(
+                    'Slip',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueGrey.shade700,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => PackagingReceiptDialog(
+                        order: order,
+                        customerName: order['user']?['name'] ??
+                            order['customer_name'] ??
+                            'Counter Guest',
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
