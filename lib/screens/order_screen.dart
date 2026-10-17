@@ -159,6 +159,577 @@ class _OrderScreenState extends State<OrderScreen>
     }
   }
 
+// ✅ Order Details Modal Sheet
+  // void _showOrderDetailSheet(Map<String, dynamic> order) {
+  //   List<dynamic> items = [];
+  //   final rawItems = order['items'] ?? order['order_items'];
+
+  //   if (rawItems is List) {
+  //     items = rawItems;
+  //   } else if (rawItems is String && rawItems.isNotEmpty) {
+  //     try {
+  //       final decoded = jsonDecode(rawItems);
+  //       if (decoded is List) items = decoded;
+  //     } catch (_) {
+  //       items = [];
+  //     }
+  //   }
+
+  //   final id = order['id'];
+  //   final status = (order['order_status'] ?? 'placed').toString().toUpperCase();
+  //   final pickupTime = order['pickup_time_slot'] ?? 'ASAP';
+  //   final total = double.tryParse(order['total']?.toString() ?? '0') ?? 0.0;
+  //   final payment =
+  //       '${order['payment_method'] ?? 'Cash'} • ${order['payment_status'] ?? 'pending'}';
+
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     backgroundColor: Colors.white,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  //     ),
+  //     builder: (ctx) {
+  //       // Wrap tight around content so there is NO extra bottom white space
+  //       return SafeArea(
+  //         child: Padding(
+  //           padding: EdgeInsets.only(
+  //             left: 20,
+  //             right: 20,
+  //             top: 14,
+  //             bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+  //           ),
+  //           child: SingleChildScrollView(
+  //             child: Column(
+  //               mainAxisSize:
+  //                   MainAxisSize.min, // 👈 Removes the blank white space
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Center(
+  //                   child: Container(
+  //                     width: 44,
+  //                     height: 4,
+  //                     decoration: BoxDecoration(
+  //                       color: Colors.grey.shade300,
+  //                       borderRadius: BorderRadius.circular(2),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 14),
+  //                 Row(
+  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                   children: [
+  //                     Text(
+  //                       '#AB-$id Details',
+  //                       style: const TextStyle(
+  //                         fontSize: 18,
+  //                         fontWeight: FontWeight.bold,
+  //                         color: AppColors.brandRed,
+  //                       ),
+  //                     ),
+  //                     Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                           horizontal: 10, vertical: 4),
+  //                       decoration: BoxDecoration(
+  //                         color: const Color(0xFFFDEEEC),
+  //                         borderRadius: BorderRadius.circular(8),
+  //                       ),
+  //                       child: Text(
+  //                         status,
+  //                         style: const TextStyle(
+  //                           fontSize: 11,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: AppColors.brandRed,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 const SizedBox(height: 4),
+  //                 Text(
+  //                   'Pickup: $pickupTime | $payment',
+  //                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+  //                 ),
+  //                 const Divider(height: 20),
+  //                 const Text(
+  //                   'Ordered Items',
+  //                   style: TextStyle(
+  //                     fontSize: 15,
+  //                     fontWeight: FontWeight.bold,
+  //                     color: Colors.black87,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 10),
+  //                 if (items.isEmpty)
+  //                   Container(
+  //                     width: double.infinity,
+  //                     padding: const EdgeInsets.all(14),
+  //                     decoration: BoxDecoration(
+  //                       color: const Color(0xFFF9FAFB),
+  //                       borderRadius: BorderRadius.circular(12),
+  //                     ),
+  //                     child: Text(
+  //                       'No item breakdown available for this order.',
+  //                       style: TextStyle(
+  //                           color: Colors.grey.shade600, fontSize: 13),
+  //                     ),
+  //                   )
+  //                 else
+  //                   ...items.map((item) {
+  //                     final itemMap = Map<String, dynamic>.from(item);
+  //                     final name = itemMap['name'] ??
+  //                         itemMap['product_name'] ??
+  //                         'Selected Product';
+  //                     final qty = itemMap['quantity'] ?? 1;
+  //                     final price = double.tryParse(
+  //                             itemMap['price']?.toString() ?? '0') ??
+  //                         0.0;
+  //                     final size = itemMap['selected_size'] ?? itemMap['size'];
+  //                     final notes =
+  //                         itemMap['notes'] ?? itemMap['special_instructions'];
+
+  //                     List addOnsList = [];
+  //                     if (itemMap['selected_add_ons'] is List) {
+  //                       addOnsList = itemMap['selected_add_ons'];
+  //                     } else if (itemMap['selected_addons'] is List) {
+  //                       addOnsList = itemMap['selected_addons'];
+  //                     }
+
+  //                     return Container(
+  //                       margin: const EdgeInsets.only(bottom: 10),
+  //                       padding: const EdgeInsets.all(12),
+  //                       decoration: BoxDecoration(
+  //                         color: const Color(0xFFFBF8F5),
+  //                         borderRadius: BorderRadius.circular(14),
+  //                         border: Border.all(color: Colors.grey.shade200),
+  //                       ),
+  //                       child: Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Row(
+  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                             children: [
+  //                               Expanded(
+  //                                 child: Text(
+  //                                   '$qty×  $name',
+  //                                   style: const TextStyle(
+  //                                     fontWeight: FontWeight.bold,
+  //                                     fontSize: 14,
+  //                                   ),
+  //                                 ),
+  //                               ),
+  //                               Text(
+  //                                 '\$${(price * qty).toStringAsFixed(2)}',
+  //                                 style: const TextStyle(
+  //                                   fontWeight: FontWeight.bold,
+  //                                   color: AppColors.brandRed,
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                           if (size != null && size.toString().isNotEmpty) ...[
+  //                             const SizedBox(height: 4),
+  //                             Row(
+  //                               children: [
+  //                                 const Text('Size: ',
+  //                                     style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         fontWeight: FontWeight.w600,
+  //                                         color: Colors.black87)),
+  //                                 Text('$size',
+  //                                     style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         color: Colors.grey.shade700)),
+  //                               ],
+  //                             ),
+  //                           ],
+  //                           if (addOnsList.isNotEmpty) ...[
+  //                             const SizedBox(height: 3),
+  //                             Row(
+  //                               crossAxisAlignment: CrossAxisAlignment.start,
+  //                               children: [
+  //                                 const Text('Add-ons: ',
+  //                                     style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         fontWeight: FontWeight.w600,
+  //                                         color: Colors.black87)),
+  //                                 Expanded(
+  //                                   child: Text(
+  //                                     addOnsList.join(', '),
+  //                                     style: TextStyle(
+  //                                         fontSize: 12,
+  //                                         color: Colors.grey.shade700),
+  //                                   ),
+  //                                 ),
+  //                               ],
+  //                             ),
+  //                           ],
+  //                           if (notes != null &&
+  //                               notes.toString().trim().isNotEmpty) ...[
+  //                             const SizedBox(height: 4),
+  //                             Text(
+  //                               'Note: "$notes"',
+  //                               style: const TextStyle(
+  //                                 fontSize: 11,
+  //                                 fontStyle: FontStyle.italic,
+  //                                 color: Colors.black54,
+  //                               ),
+  //                             ),
+  //                           ],
+  //                         ],
+  //                       ),
+  //                     );
+  //                   }),
+  //                 const Divider(height: 20),
+  //                 Row(
+  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                   children: [
+  //                     const Text(
+  //                       'Total Paid / Due',
+  //                       style: TextStyle(
+  //                           fontSize: 15, fontWeight: FontWeight.bold),
+  //                     ),
+  //                     Text(
+  //                       '\$${total.toStringAsFixed(2)}',
+  //                       style: const TextStyle(
+  //                         fontSize: 19,
+  //                         fontWeight: FontWeight.w900,
+  //                         color: AppColors.brandRed,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  void _showOrderDetailSheet(Map<String, dynamic> order) {
+    List<dynamic> items = [];
+    final rawItems = order['items'] ?? order['order_items'];
+
+    if (rawItems is List) {
+      items = rawItems;
+    } else if (rawItems is String && rawItems.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawItems);
+        if (decoded is List) items = decoded;
+      } catch (_) {
+        items = [];
+      }
+    }
+
+    final id = order['id'];
+    final status = (order['order_status'] ?? 'placed').toString().toUpperCase();
+    final pickupTime = order['pickup_time_slot'] ?? 'ASAP';
+    final pickupCode = order['pickup_code'] ?? '#AB-$id';
+    final total = double.tryParse(order['total']?.toString() ?? '0') ?? 0.0;
+    final payment =
+        '${order['payment_method'] ?? 'Cash'} • ${order['payment_status'] ?? 'pending'}';
+
+    // 1. Calculate Items Subtotal
+    double calculatedSubtotal = 0.0;
+    for (final item in items) {
+      final qty = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+      final price = double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
+      calculatedSubtotal += (price * qty);
+    }
+
+    // 2. Calculate 8% Tax
+    double taxAmount = 0.0;
+    if (calculatedSubtotal > 0) {
+      taxAmount = (total - calculatedSubtotal) > 0
+          ? (total - calculatedSubtotal)
+          : calculatedSubtotal * 0.08;
+    } else {
+      calculatedSubtotal = total / 1.08;
+      taxAmount = total - calculatedSubtotal;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 14,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '#AB-$id Details',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.brandRed,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDEEEC),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          status,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.brandRed,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Pickup: $pickupTime | $payment',
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                      Text(
+                        'Token: $pickupCode',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 20),
+
+                  const Text(
+                    'Ordered Items',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (items.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'No item breakdown available for this order.',
+                        style: TextStyle(
+                            color: Colors.grey.shade600, fontSize: 13),
+                      ),
+                    )
+                  else
+                    ...items.map((item) {
+                      final itemMap = Map<String, dynamic>.from(item);
+                      final name = itemMap['name'] ??
+                          itemMap['product_name'] ??
+                          'Selected Product';
+                      final qty = itemMap['quantity'] ?? 1;
+                      final price = double.tryParse(
+                              itemMap['price']?.toString() ?? '0') ??
+                          0.0;
+                      final size = itemMap['selected_size'] ?? itemMap['size'];
+                      final notes =
+                          itemMap['notes'] ?? itemMap['special_instructions'];
+
+                      List addOnsList = [];
+                      if (itemMap['selected_add_ons'] is List) {
+                        addOnsList = itemMap['selected_add_ons'];
+                      } else if (itemMap['selected_addons'] is List) {
+                        addOnsList = itemMap['selected_addons'];
+                      }
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFBF8F5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '$qty×  $name',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '\$${(price * qty).toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.brandRed,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (size != null && size.toString().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Text('Size: ',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87)),
+                                  Text('$size',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700)),
+                                ],
+                              ),
+                            ],
+                            if (addOnsList.isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Add-ons: ',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87)),
+                                  Expanded(
+                                    child: Text(
+                                      addOnsList.join(', '),
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade700),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (notes != null &&
+                                notes.toString().trim().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                'Note: "$notes"',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }),
+
+                  const Divider(height: 22),
+
+                  // 🧾 Bill Summary (Subtotal + Tax only)
+                  _buildReceiptRow(
+                    label: 'Subtotal',
+                    value: '\$${calculatedSubtotal.toStringAsFixed(2)}',
+                  ),
+                  const SizedBox(height: 6),
+                  _buildReceiptRow(
+                    label: 'Tax (VAT 8%)',
+                    value: '\$${taxAmount.toStringAsFixed(2)}',
+                  ),
+
+                  const Divider(height: 20),
+
+                  // Grand Total
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Total Paid / Due',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '\$${total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.brandRed,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildReceiptRow({
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,108 +822,114 @@ class _OrderScreenState extends State<OrderScreen>
     final pickupCode = order['pickup_code'] ?? '#AB-${order['id']}';
     final pickupTime = order['pickup_time_slot'] ?? 'ASAP';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '#AB-${order['id']}',
-                style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: AppColors.brandRed),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Pickup: $pickupTime',
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => _showOrderDetailSheet(order), // 👈 Open item detail on click
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '#AB-${order['id']}',
                   style: const TextStyle(
-                      color: Colors.deepOrange,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: AppColors.brandRed),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'Pickup: $pickupTime',
+                    style: const TextStyle(
+                        color: Colors.deepOrange,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _buildTimelineStepper(status),
+            if (status == 'ready_to_pickup')
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Ready at Counter!',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF15803D),
+                                fontSize: 13)),
+                        Text('Show token to collect meal',
+                            style: TextStyle(
+                                color: Color(0xFF4B5563), fontSize: 11)),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                          color: const Color(0xFF15803D),
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Text(
+                        pickupCode,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            letterSpacing: 1.2),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          _buildTimelineStepper(status),
-          if (status == 'ready_to_pickup')
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF86EFAC)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Ready at Counter!',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF15803D),
-                              fontSize: 13)),
-                      Text('Show token to collect meal',
-                          style: TextStyle(
-                              color: Color(0xFF4B5563), fontSize: 11)),
-                    ],
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF15803D),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Text(
-                      pickupCode,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          letterSpacing: 1.2),
-                    ),
-                  ),
-                ],
-              ),
+            const Divider(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                    '${order['payment_method'] ?? 'ABA KHQR'} • ${order['payment_status'] ?? 'paid'}',
+                    style:
+                        TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                Text(
+                  '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.brandRed),
+                ),
+              ],
             ),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                  '${order['payment_method'] ?? 'ABA KHQR'} • ${order['payment_status'] ?? 'paid'}',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-              Text(
-                '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
-                style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.brandRed),
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -455,56 +1032,60 @@ class _OrderScreenState extends State<OrderScreen>
       itemBuilder: (context, index) {
         final order = _pastOrders[index];
         final isCancelled = order['order_status'] == 'cancelled';
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(
-                  color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('#AB-${order['id']}',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isCancelled
-                          ? Colors.red.shade50
-                          : Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      isCancelled ? 'Cancelled' : 'Completed',
-                      style: TextStyle(
+        return InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showOrderDetailSheet(order), // 👈 Open on click
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                    color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('#AB-${order['id']}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
                         color: isCancelled
-                            ? Colors.red.shade700
-                            : Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                            ? Colors.red.shade50
+                            : Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        isCancelled ? 'Cancelled' : 'Completed',
+                        style: TextStyle(
+                          color: isCancelled
+                              ? Colors.red.shade700
+                              : Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                  '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
-                  style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.brandRed)),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                    '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.brandRed)),
+              ],
+            ),
           ),
         );
       },

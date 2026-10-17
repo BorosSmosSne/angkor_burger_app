@@ -12,10 +12,10 @@ import 'package:angkor_burger_app/models/cart_item_model.dart';
 import 'package:angkor_burger_app/models/checkout_model.dart';
 import 'package:angkor_burger_app/models/customer_info_model.dart';
 import 'package:angkor_burger_app/models/order_model.dart';
-import 'package:angkor_burger_app/screens/checkout_payment_method_screen.dart';
 import 'package:angkor_burger_app/screens/home_screen.dart';
 import 'package:angkor_burger_app/screens/order_screen.dart';
 import 'package:angkor_burger_app/services/rest_api.dart';
+import 'package:angkor_burger_app/screens/khqr_payment_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -42,6 +42,10 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  String? _savedCardNumber;
+  String? _savedCardExpiry;
+  String? _savedCardCvv;
+
   final ServiceType _serviceType = ServiceType.pickup;
   String _selectedPayment = 'Cash';
   final String _selectedPickupTime = 'ASAP (~5 mins)';
@@ -86,7 +90,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return widget.taxAmount ?? CheckoutModel.calculateTax(_calculatedSubtotal);
   }
 
-  // ✅ Total strictly based on subtotal, discount, and tax (no delivery fee)
   double get _calculatedTotal {
     return CheckoutModel.calculateTotal(
       subtotal: _calculatedSubtotal,
@@ -123,7 +126,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    // ✅ Enforce 8 to 10 digits validation
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -158,7 +160,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'product_id': item.product.id ?? 1,
         'name': item.product.name,
         'quantity': item.quantity,
-        'price': item.product.price,
+        'price': item.unitPrice,
+        'selected_size': item.selectedSize,
+        'selected_add_ons': item.selectedAddOns,
+        'notes': item.notes ?? '',
       };
     }).toList();
 
@@ -305,10 +310,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         setState(() => _isSubmitting = false);
 
+        // ✅ Direct push to Screen 3 (KhqrPaymentScreen), bypassing payment selection
         final paymentSuccess = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
-            builder: (context) => CheckoutPaymentMethodScreen(
+            builder: (context) => KhqrPaymentScreen(
               amount: _calculatedTotal,
               subtotal: _calculatedSubtotal,
               tranId: tranId,
@@ -316,7 +322,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               qrImageBase64: qrImage,
               apiBaseUrl: RestApi.baseUrl,
               orderId: orderId,
-              storeName: 'Angkor Burger',
+              merchantName: 'Angkor Burger',
             ),
           ),
         );
@@ -344,7 +350,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final checkoutOrder = CheckoutModel(
         customerInfo: customerInfo,
         serviceType: ServiceType.pickup,
-        paymentMethod: _selectedPayment,
+        paymentMethod: isAba ? 'ABA Pay' : _selectedPayment,
         cartItems: widget.cartItems,
         subtotal: _calculatedSubtotal,
         discountAmount: _appliedDiscount,
@@ -358,6 +364,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       widget.onClearCart?.call();
 
+      // ✅ Trigger Animated Dialog
       _showOrderPlacedSuccessDialog(checkoutOrder,
           customOrderId: '#AB-$orderId');
     } catch (e) {
@@ -373,173 +380,515 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  void _showCreditCardInputDialog() {
+    final TextEditingController cardNumCtrl =
+        TextEditingController(text: _savedCardNumber ?? '');
+    final TextEditingController expiryCtrl =
+        TextEditingController(text: _savedCardExpiry ?? '');
+    final TextEditingController cvvCtrl =
+        TextEditingController(text: _savedCardCvv ?? '');
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'CreditCardModal',
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, anim, secondaryAnim, child) {
+        final curvedValue = Curves.easeOutBack.transform(anim.value);
+
+        return Transform.scale(
+          scale: curvedValue,
+          child: Opacity(
+            opacity: anim.value.clamp(0.0, 1.0),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(22),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    )
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(Icons.credit_card,
+                                  color: AppColors.brandRed, size: 22),
+                              SizedBox(width: 8),
+                              Text(
+                                'Credit / Debit Card',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close,
+                                size: 20, color: Colors.grey),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Card Number Field
+                      const Text(
+                        'Card number',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: cardNumCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(16),
+                          _CardNumberInputFormatter(),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: '4378 9200 1600 4207',
+                          hintStyle: TextStyle(
+                              color: Colors.grey.shade400, fontSize: 14),
+                          filled: true,
+                          fillColor: const Color(0xFFF9FAFB),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A1F71), // Visa Blue
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'VISA',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                                color: AppColors.brandRed, width: 1.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Expiry Date & CVV Row
+                      Row(
+                        children: [
+                          // Expiry Date
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Expiry date',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: expiryCtrl,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(4),
+                                    _CardExpiryInputFormatter(),
+                                  ],
+                                  decoration: InputDecoration(
+                                    hintText: 'MM/YY',
+                                    hintStyle: TextStyle(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 14),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF9FAFB),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.shade200),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandRed,
+                                          width: 1.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+
+                          // CVV
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'CVV',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: cvvCtrl,
+                                  obscureText: true,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(3),
+                                  ],
+                                  decoration: InputDecoration(
+                                    hintText: '•••',
+                                    hintStyle: TextStyle(
+                                        color: Colors.grey.shade400,
+                                        fontSize: 14),
+                                    filled: true,
+                                    fillColor: const Color(0xFFF9FAFB),
+                                    suffixIcon: const Icon(Icons.help_outline,
+                                        size: 18, color: Colors.grey),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.shade200),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandRed,
+                                          width: 1.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Submit / Confirm Card Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.brandRed,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () {
+                            final card = cardNumCtrl.text.trim();
+                            final expiry = expiryCtrl.text.trim();
+                            final cvv = cvvCtrl.text.trim();
+
+                            if (card.replaceAll(' ', '').length < 15) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please enter a valid 16-digit card number'),
+                                    backgroundColor: Colors.redAccent),
+                              );
+                              return;
+                            }
+                            if (expiry.length < 5) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Please enter card expiry date (MM/YY)'),
+                                    backgroundColor: Colors.redAccent),
+                              );
+                              return;
+                            }
+                            if (cvv.length < 3) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text('Please enter 3-digit CVV'),
+                                    backgroundColor: Colors.redAccent),
+                              );
+                              return;
+                            }
+
+                            setState(() {
+                              _savedCardNumber = card;
+                              _savedCardExpiry = expiry;
+                              _savedCardCvv = cvv;
+                              _selectedPayment = 'Credit Card';
+                            });
+
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Save Card & Pay \$${_calculatedTotal.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ Animated Order Placed Dialog (Scale + Fade + Checkmark bounce)
   void _showOrderPlacedSuccessDialog(CheckoutModel order,
       {String? customOrderId}) {
-    showDialog(
+    final String orderNum = customOrderId ?? order.orderId;
+
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          contentPadding: const EdgeInsets.all(24),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
+      barrierLabel: 'OrderPlacedDialog',
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) => const SizedBox.shrink(),
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedValue = Curves.easeOutBack.transform(animation.value);
+
+        return Transform.scale(
+          scale: curvedValue,
+          child: Opacity(
+            opacity: animation.value.clamp(0.0, 1.0),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                    color: Colors.green.shade50, shape: BoxShape.circle),
-                child: const Icon(Icons.check_circle_rounded,
-                    color: Colors.green, size: 54),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Order Placed!',
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                    color: Colors.black87),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Thank you for ordering with Angkor Burger.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.brandColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Order Number:',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                        Text(
-                          customOrderId ?? order.orderId,
-                          style: const TextStyle(
-                              fontSize: 13,
+                    // Animated Bouncing Green Checkmark
+                    _AnimatedCheckmarkIcon(),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Order Placed!',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 22,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Thank you for ordering with Angkor Burger.',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Receipt Info Card
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Order Number:',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                              Text(
+                                orderNum,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.brandRed),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Service:',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                              Text('Pickup',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Payment:',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                              Text(order.paymentMethod,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const Divider(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total Paid:',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '\$${order.total.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.brandRed),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Track / View Orders Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (widget.onNavigateToTab != null) {
+                            Navigator.pop(context);
+                            widget.onNavigateToTab!(3);
+                            return;
+                          }
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const OrderScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brandRed,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Track / View My Orders',
+                          style: TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.brandRed),
+                              fontSize: 15),
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Service:',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                        const Text('Pickup',
-                            style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Payment:',
-                            style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600)),
-                        Text(order.paymentMethod,
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const Divider(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Total Paid:',
-                            style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.bold)),
-                        Text(
-                          '\$${order.total.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.brandRed),
+
+                    // Back to Home Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (widget.onNavigateToTab != null) {
+                            Navigator.pop(context);
+                            widget.onNavigateToTab!(0);
+                            return;
+                          }
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const HomeScreen()),
+                            (route) => false,
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.brandRed,
+                          side: const BorderSide(color: AppColors.brandRed),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
                         ),
-                      ],
+                        child: const Text('Back to Home',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    if (widget.onNavigateToTab != null) {
-                      Navigator.pop(context);
-                      widget.onNavigateToTab!(3);
-                      return;
-                    }
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const OrderScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.brandRed,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Track / View My Orders',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    if (widget.onNavigateToTab != null) {
-                      Navigator.pop(context);
-                      widget.onNavigateToTab!(0);
-                      return;
-                    }
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const HomeScreen()),
-                      (route) => false,
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.brandRed,
-                    side: const BorderSide(color: AppColors.brandRed),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text('Back to Home',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
@@ -669,7 +1018,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             keyboardType: TextInputType.phone,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10), // Caps at 10 digits
+              LengthLimitingTextInputFormatter(10),
             ],
           ),
         ],
@@ -1031,7 +1380,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final isSelected = _selectedPayment == paymentMethod.name;
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedPayment = paymentMethod.name),
+      onTap: () {
+        setState(() => _selectedPayment = paymentMethod.name);
+        // ✅ If paying by Credit Card, ensure the card details are entered first
+        if (_selectedPayment.toLowerCase().contains('credit') ||
+            _selectedPayment.toLowerCase().contains('card')) {
+          if (_savedCardNumber == null || _savedCardNumber!.isEmpty) {
+            _showCreditCardInputDialog();
+            return;
+          }
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         width: width,
@@ -1075,9 +1434,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: paymentMethod.brandColor, size: 18),
               ),
             const SizedBox(width: 10),
+            // Expanded(
+            //   child: Text(
+            //     paymentMethod.name,
+            //     maxLines: 1,
+            //     overflow: TextOverflow.ellipsis,
+            //     style: TextStyle(
+            //       fontSize: 13,
+            //       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            //       color: isSelected ? AppColors.brandRed : Colors.black87,
+            //     ),
+            //   ),
+            // ),
             Expanded(
               child: Text(
-                paymentMethod.name,
+                (paymentMethod.name.toLowerCase().contains('card') &&
+                        _savedCardNumber != null &&
+                        _savedCardNumber!.length >= 4)
+                    ? 'Card (••${_savedCardNumber!.replaceAll(' ', '').substring(_savedCardNumber!.replaceAll(' ', '').length - 4)})'
+                    : paymentMethod.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -1114,6 +1489,118 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   fontSize: 14)),
         ],
       ),
+    );
+  }
+}
+
+// ✅ Animated Bouncing Checkmark Icon Component
+class _AnimatedCheckmarkIcon extends StatefulWidget {
+  @override
+  State<_AnimatedCheckmarkIcon> createState() => _AnimatedCheckmarkIconState();
+}
+
+class _AnimatedCheckmarkIconState extends State<_AnimatedCheckmarkIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    );
+
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.25)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 70,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.25, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+    ]).animate(_controller);
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: Colors.green.shade50,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.check_circle_rounded,
+          color: Colors.green,
+          size: 54,
+        ),
+      ),
+    );
+  }
+}
+
+// Auto-format card number as 0000 0000 0000 0000
+class _CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var text = newValue.text.replaceAll(' ', '');
+    if (text.length > 16) text = text.substring(0, 16);
+
+    var buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      var nonZeroIndex = i + 1;
+      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
+        buffer.write(' ');
+      }
+    }
+
+    var string = buffer.toString();
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
+  }
+}
+
+// Auto-format card expiry as MM/YY
+class _CardExpiryInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var newText = newValue.text.replaceAll('/', '');
+    if (newText.length > 4) newText = newText.substring(0, 4);
+
+    var buffer = StringBuffer();
+    for (int i = 0; i < newText.length; i++) {
+      buffer.write(newText[i]);
+      var nonZeroIndex = i + 1;
+      if (nonZeroIndex % 2 == 0 && nonZeroIndex != newText.length) {
+        buffer.write('/');
+      }
+    }
+
+    var string = buffer.toString();
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
     );
   }
 }
