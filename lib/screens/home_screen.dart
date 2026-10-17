@@ -840,30 +840,40 @@ class _HomeScreenState extends State<HomeScreen> {
             onNavigateToTab: _onBottomNavTapped,
             onContinueShopping: () => _onBottomNavTapped(0),
           ),
-          ValueListenableBuilder<UserProfileModel>(
-            valueListenable: UserProfileManager.profileNotifier,
-            builder: (context, profile, _) {
-              final role = profile.role.toLowerCase();
-              final bool isStaffOrAdmin = role == 'staff' ||
-                  role == 'admin' ||
-                  RestApi.currentUserRole.toLowerCase() == 'staff' ||
-                  RestApi.currentUserRole.toLowerCase() == 'admin' ||
-                  UserProfileManager.isAdmin;
+          // ValueListenableBuilder<UserProfileModel>(
+          //   valueListenable: UserProfileManager.profileNotifier,
+          //   builder: (context, profile, _) {
+          //     final role = profile.role.toLowerCase();
+          //     final bool isStaffOrAdmin = role == 'staff' ||
+          //         role == 'admin' ||
+          //         RestApi.currentUserRole.toLowerCase() == 'staff' ||
+          //         RestApi.currentUserRole.toLowerCase() == 'admin' ||
+          //         UserProfileManager.isAdmin;
 
-              if (isStaffOrAdmin) {
-                return const StaffKitchenScreen();
-              }
+          //     if (isStaffOrAdmin) {
+          //       return const StaffKitchenScreen();
+          //     }
 
-              return OrderScreen(
-                cartItems: _cartItems,
-                onAddToCart: _addToCart,
-                onUpdateCartQuantity: _updateCartQuantity,
-                onRemoveCartItem: _removeFromCart,
-                onClearCart: _clearCart,
-                showBottomNav: false,
-                onNavigateToTab: _onBottomNavTapped,
-              );
-            },
+          //     return OrderScreen(
+          //       cartItems: _cartItems,
+          //       onAddToCart: _addToCart,
+          //       onUpdateCartQuantity: _updateCartQuantity,
+          //       onRemoveCartItem: _removeFromCart,
+          //       onClearCart: _clearCart,
+          //       showBottomNav: false,
+          //       onNavigateToTab: _onBottomNavTapped,
+          //     );
+          //   },
+          // ),
+          // ✅ Tab 3 in HomeScreen is ALWAYS Customer Orders:
+          OrderScreen(
+            cartItems: _cartItems,
+            onAddToCart: _addToCart,
+            onUpdateCartQuantity: _updateCartQuantity,
+            onRemoveCartItem: _removeFromCart,
+            onClearCart: _clearCart,
+            showBottomNav: false,
+            onNavigateToTab: _onBottomNavTapped,
           ),
           UserProfileScreen(
             cartItems: _cartItems,

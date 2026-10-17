@@ -14,7 +14,7 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  static const Color maroonColor = Color(0xFF7A1C1C);
+  static const Color burgundy = Color(0xFF7A1C1C);
 
   // Toggle states
   bool _isActive = true;
@@ -339,14 +339,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: maroonColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+            Image.asset(
+              'assets/images/logo_angkorBurger.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: burgundy,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.lunch_dining,
+                    color: Colors.white, size: 20),
               ),
-              child:
-                  const Icon(Icons.lunch_dining, color: maroonColor, size: 20),
             ),
             const SizedBox(width: 8),
             Text(
@@ -354,26 +360,24 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ? 'Edit Menu Item'
                   : 'Add Menu Item',
               style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
+                  color: burgundy, fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black54),
-            onPressed: () {},
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 14),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: maroonColor,
-              child: Icon(Icons.person, color: Colors.white, size: 18),
-            ),
-          ),
-        ],
+        // actions: [
+        //   // IconButton(
+        //   //   icon: const Icon(Icons.notifications_none, color: Colors.black54),
+        //   //   onPressed: () {},
+        //   // ),
+        //   const Padding(
+        //     padding: EdgeInsets.only(right: 14),
+        //     child: CircleAvatar(
+        //       radius: 16,
+        //       backgroundColor: burgundy,
+        //       child: Icon(Icons.person, color: Colors.white, size: 18),
+        //     ),
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -459,12 +463,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       OutlinedButton.icon(
                         onPressed: () => setState(
                             () => _showCreateCategory = !_showCreateCategory),
-                        icon:
-                            const Icon(Icons.add, size: 16, color: maroonColor),
+                        icon: const Icon(Icons.add, size: 16, color: burgundy),
                         label: const Text('New',
-                            style: TextStyle(color: maroonColor, fontSize: 13)),
+                            style: TextStyle(color: burgundy, fontSize: 13)),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: maroonColor),
+                          side: const BorderSide(color: burgundy),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
@@ -668,7 +671,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               _isActive
                                   ? Icons.visibility
                                   : Icons.visibility_off,
-                              color: _isActive ? maroonColor : Colors.grey,
+                              color: _isActive ? burgundy : Colors.grey,
                               size: 22,
                             ),
                             const SizedBox(width: 10),
@@ -696,7 +699,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             ),
                             Switch(
                               value: _isActive,
-                              activeThumbColor: maroonColor,
+                              activeThumbColor: burgundy,
                               onChanged: (val) =>
                                   setState(() => _isActive = val),
                             ),
@@ -776,7 +779,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             ),
                             Switch(
                               value: _isPopular,
-                              activeThumbColor: maroonColor,
+                              activeThumbColor: burgundy,
                               onChanged: (val) =>
                                   setState(() => _isPopular = val),
                             ),
@@ -876,13 +879,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       ElevatedButton(
                         onPressed: _addIngredient,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade200,
-                          foregroundColor: Colors.black87,
+                          backgroundColor: const Color(0xFFFDEEEC),
+                          foregroundColor: burgundy,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: const Text('+ Add'),
+                        child: const Text(
+                          '+ Add',
+                          style: TextStyle(
+                            color: burgundy,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -959,9 +969,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           });
                         });
                       },
-                      icon: const Icon(Icons.add, size: 16, color: maroonColor),
-                      label: const Text('+ Add Size Option',
-                          style: TextStyle(color: maroonColor, fontSize: 13)),
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(
+                            0xFFFDEEEC), // Soft filled burgundy background
+                        foregroundColor: burgundy,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: const BorderSide(color: Color(0xFFF5D2CE)),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: burgundy),
+                      label: const Text('Add Size Option',
+                          style: TextStyle(color: burgundy, fontSize: 13)),
                     ),
                   ),
                 ],
@@ -1012,11 +1033,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 prefixText: '+\$',
+                                prefixStyle: TextStyle(
+                                  color: burgundy,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                                 isDense: true,
                                 border: InputBorder.none,
                               ),
                               style: const TextStyle(
-                                  color: maroonColor,
+                                  color: burgundy,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13),
                             ),
@@ -1045,9 +1071,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           });
                         });
                       },
-                      icon: const Icon(Icons.add, size: 16, color: maroonColor),
-                      label: const Text('+ Add Option',
-                          style: TextStyle(color: maroonColor, fontSize: 13)),
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(
+                            0xFFFDEEEC), // Soft filled burgundy background
+                        foregroundColor: burgundy,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: const BorderSide(color: Color(0xFFF5D2CE)),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 16, color: burgundy),
+                      label: const Text('Add Option',
+                          style: TextStyle(color: burgundy, fontSize: 13)),
                     ),
                   ),
                 ],
@@ -1066,10 +1103,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       _buildSectionHeader('Menu Display Preview'),
                       TextButton.icon(
                         onPressed: _pickImage,
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(
+                              0xFFFDEEEC), // Soft filled burgundy background
+                          foregroundColor: burgundy,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: Color(0xFFF5D2CE)),
+                          ),
+                        ),
                         icon: const Icon(Icons.photo_camera,
-                            size: 16, color: maroonColor),
+                            size: 16, color: burgundy),
                         label: const Text('Upload Image',
-                            style: TextStyle(color: maroonColor, fontSize: 12)),
+                            style: TextStyle(color: burgundy, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -1178,7 +1226,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: maroonColor,
+                      backgroundColor: burgundy,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
@@ -1222,7 +1270,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
-                    color: maroonColor, shape: BoxShape.circle)),
+                    color: burgundy, shape: BoxShape.circle)),
             const SizedBox(width: 6),
             Text(title,
                 style:

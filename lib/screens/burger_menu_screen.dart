@@ -298,14 +298,20 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
       automaticallyImplyLeading: false,
       title: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: burgundy,
-              borderRadius: BorderRadius.circular(10),
+          Image.asset(
+            'assets/images/logo_angkorBurger.png',
+            width: 36,
+            height: 36,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: burgundy,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child:
+                  const Icon(Icons.lunch_dining, color: Colors.white, size: 20),
             ),
-            child:
-                const Icon(Icons.lunch_dining, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 10),
           Column(
