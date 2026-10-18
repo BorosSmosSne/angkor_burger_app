@@ -35,15 +35,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _newCategoryController = TextEditingController();
 
   // Categories list
-  final List<String> _categoryOptions = [
-    'Burgers (Gourmet Series)',
-    'Chicken & Wings',
-    'Drinks & Fries',
-    'Sides & Wings',
-    'Dessert',
-  ];
-
-  late String _selectedCategory;
+  // final List<String> _categoryOptions = [
+  //   'Burgers (Gourmet Series)',
+  //   'Chicken & Wings',
+  //   'Drinks & Fries',
+  //   'Sides & Wings',
+  //   'Dessert',
+  // ];
+// Categories list
+  List<String> _categoryOptions = [];
+  String? _selectedCategory;
   bool _showCreateCategory = false;
 
   // Image Upload State
@@ -96,7 +97,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = _categoryOptions.first;
+    // _selectedCategory = _categoryOptions.first;
 
     if (widget.existingProduct != null) {
       final p = widget.existingProduct!;
@@ -157,16 +158,47 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     }
 
-    // 2. Fetch all real categories from MySQL so all added categories appear
+    // Fetch real categories from MySQL
     _loadBackendCategories();
   }
 
 // Method to fetch all categories from MySQL into the dropdown list
+  // Future<void> _loadBackendCategories() async {
+  //   try {
+  //     final liveCategories = await RestApi.fetchCategories();
+  //     if (liveCategories.isNotEmpty && mounted) {
+  //       setState(() {
+  //         for (var cat in liveCategories) {
+  //           String name = '';
+  //           if (cat is Map) {
+  //             name = (cat['name'] ?? '').toString().trim();
+  //           } else {
+  //             name = cat.toString().trim();
+  //           }
+
+  //           if (name.isNotEmpty && !_categoryOptions.contains(name)) {
+  //             _categoryOptions.add(name);
+  //           }
+  //         }
+
+  //         // Keep the selected category consistent
+  //         if (!_categoryOptions.contains(_selectedCategory)) {
+  //           _categoryOptions.add(_selectedCategory);
+  //         }
+  //       });
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error loading backend categories: $e');
+  //   }
+  // }
+
   Future<void> _loadBackendCategories() async {
     try {
       final liveCategories = await RestApi.fetchCategories();
-      if (liveCategories.isNotEmpty && mounted) {
+      if (mounted) {
         setState(() {
+          final List<String> fetched = [];
+
           for (var cat in liveCategories) {
             String name = '';
             if (cat is Map) {
@@ -175,14 +207,27 @@ class _AddProductScreenState extends State<AddProductScreen> {
               name = cat.toString().trim();
             }
 
-            if (name.isNotEmpty && !_categoryOptions.contains(name)) {
-              _categoryOptions.add(name);
+            if (name.isNotEmpty && !fetched.contains(name)) {
+              fetched.add(name);
             }
           }
 
-          // Keep the selected category consistent
-          if (!_categoryOptions.contains(_selectedCategory)) {
-            _categoryOptions.add(_selectedCategory);
+          // If existing product category exists and isn't in DB, retain it
+          if (widget.existingProduct != null &&
+              widget.existingProduct!.category.isNotEmpty &&
+              !fetched.contains(widget.existingProduct!.category)) {
+            fetched.insert(0, widget.existingProduct!.category);
+          }
+
+          // Overwrite options with live database records
+          _categoryOptions = fetched;
+
+          // Automatically select the first available category if none is set
+          if (_categoryOptions.isNotEmpty) {
+            if (_selectedCategory == null ||
+                !_categoryOptions.contains(_selectedCategory)) {
+              _selectedCategory = _categoryOptions.first;
+            }
           }
         });
       }
@@ -255,6 +300,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
       return;
     }
+// Safe fallback category
+    final activeCategory = _selectedCategory ??
+        (_categoryOptions.isNotEmpty ? _categoryOptions.first : 'Burgers');
 
     setState(() => _isSaving = true);
 
@@ -282,7 +330,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     // Strings '1' or '0' for multipart form-data compatibility
     final fields = {
-      'category_id': _getCategoryId(_selectedCategory),
+      'category_id': _getCategoryId(activeCategory),
       'category_name': _selectedCategory,
       'name': _nameController.text.trim(),
       'base_price': basePrice.toString(),
@@ -438,10 +486,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value:
-                                  _categoryOptions.contains(_selectedCategory)
-                                      ? _selectedCategory
-                                      : _categoryOptions.first,
+                              value: (_selectedCategory != null &&
+                                      _categoryOptions
+                                          .contains(_selectedCategory))
+                                  ? _selectedCategory
+                                  : (_categoryOptions.isNotEmpty
+                                      ? _categoryOptions.first
+                                      : null),
+                              hint: const Text('Loading categories...',
+                                  style: TextStyle(fontSize: 13)),
                               isExpanded: true,
                               items: _categoryOptions.map((cat) {
                                 return DropdownMenuItem(
