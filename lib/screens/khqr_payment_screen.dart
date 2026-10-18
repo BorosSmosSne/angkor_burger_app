@@ -1,9 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:flutter/rendering.dart';
+// import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gal/gal.dart';
 
 class KhqrPaymentScreen extends StatefulWidget {
   final int? orderId;
@@ -44,6 +49,61 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
 
   static const double _headerHeight = 58;
   static const double _foldSize = 28;
+
+  final GlobalKey _qrKey = GlobalKey(); // GlobalKey to capture the QR card
+
+  Future<void> _downloadQrCode() async {
+    try {
+      // 1. Check or request gallery access permission
+      final hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess();
+        if (!granted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Gallery permission is required to save QR.')),
+            );
+          }
+          return;
+        }
+      }
+
+      // 2. Capture the ticket card as PNG bytes
+      final boundary =
+          _qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final Uint8List pngBytes = byteData.buffer.asUint8List();
+
+      // 3. Save to device gallery
+      await Gal.putImageBytes(
+        pngBytes,
+        name: 'KHQR_${widget.tranId}',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('QR Code saved to gallery successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving QR code: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -161,15 +221,24 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
               onPressed: () => Navigator.pop(context, false),
             ),
           ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: brandGreen,
-              shape: BoxShape.circle,
+          Image.asset(
+            'assets/images/logo_angkorBurger.png',
+            width: 42,
+            height: 42,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                color: brandGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.shopping_cart_outlined,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
-            child: const Icon(Icons.shopping_cart_outlined,
-                color: Colors.white, size: 22),
           ),
         ],
       ),
@@ -178,117 +247,120 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
 
   // ------------------------------------------------------------ ticket card
   Widget _buildTicketCard(double qrSize, String amountFormatted) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: Column(
-                children: [
-                  // Red KHQR banner
-                  Container(
-                    height: _headerHeight,
-                    width: double.infinity,
-                    color: khqrRed,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'KHQR',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2.4,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Merchant + amount, aligned with the QR's left edge
-                  SizedBox(
-                    width: qrSize,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.merchantName,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF1A1A1A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              amountFormatted,
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.currency.toUpperCase(),
-                              style: const TextStyle(
-                                color: Color(0xFF222222),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // Full-width perforation
-                  const MicroDashedDivider(
-                    color: Color(0xFF9E9E9E),
-                    dashWidth: 6,
-                    dashSpace: 4,
-                  ),
-
-                  const SizedBox(height: 26),
-
-                  _buildQr(qrSize),
-
-                  const SizedBox(height: 28),
-                ],
-              ),
-            ),
-
-            // Red fold triangle: the white body's top-right corner is cut
-            // diagonally and this fills the cut.
-            const Positioned(
-              top: _headerHeight,
-              right: 0,
-              child: CustomPaint(
-                size: Size(_foldSize, _foldSize),
-                painter: _FoldPainter(khqrRed),
-              ),
+    return RepaintBoundary(
+      key: _qrKey,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: Column(
+                  children: [
+                    // Red KHQR banner
+                    Container(
+                      height: _headerHeight,
+                      width: double.infinity,
+                      color: khqrRed,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'KHQR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.4,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Merchant + amount, aligned with the QR's left edge
+                    SizedBox(
+                      width: qrSize,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.merchantName,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF1A1A1A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                amountFormatted,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                widget.currency.toUpperCase(),
+                                style: const TextStyle(
+                                  color: Color(0xFF222222),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 22),
+
+                    // Full-width perforation
+                    const MicroDashedDivider(
+                      color: Color(0xFF9E9E9E),
+                      dashWidth: 6,
+                      dashSpace: 4,
+                    ),
+
+                    const SizedBox(height: 26),
+
+                    _buildQr(qrSize),
+
+                    const SizedBox(height: 28),
+                  ],
+                ),
+              ),
+
+              // Red fold triangle: the white body's top-right corner is cut
+              // diagonally and this fills the cut.
+              const Positioned(
+                top: _headerHeight,
+                right: 0,
+                child: CustomPaint(
+                  size: Size(_foldSize, _foldSize),
+                  painter: _FoldPainter(khqrRed),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -383,12 +455,35 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
           style: TextStyle(fontSize: 12, color: Colors.black),
         ),
         const SizedBox(height: 14),
+        // InkWell(
+        //   onTap: () {
+        //     ScaffoldMessenger.of(context).showSnackBar(
+        //       const SnackBar(content: Text('QR Code saved to gallery.')),
+        //     );
+        //   },
+        //   borderRadius: BorderRadius.circular(8),
+        //   child: const Padding(
+        //     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        //     child: Row(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         Icon(Icons.file_download_outlined,
+        //             color: downloadBlue, size: 24),
+        //         SizedBox(width: 8),
+        //         Text(
+        //           'Download QR',
+        //           style: TextStyle(
+        //             color: downloadBlue,
+        //             fontWeight: FontWeight.w600,
+        //             fontSize: 16,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         InkWell(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('QR Code saved to gallery.')),
-            );
-          },
+          onTap: _downloadQrCode, // Call the real save method
           borderRadius: BorderRadius.circular(8),
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),

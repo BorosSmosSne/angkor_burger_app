@@ -498,15 +498,23 @@ class _OrderScreenState extends State<OrderScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFDEEEC),
+                          color: status == 'COMPLETED'
+                              ? Colors.green.shade50
+                              : (status == 'CANCELLED'
+                                  ? Colors.red.shade50
+                                  : const Color(0xFFFDEEEC)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           status,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.brandRed,
+                            color: status == 'COMPLETED'
+                                ? Colors.green.shade700
+                                : (status == 'CANCELLED'
+                                    ? Colors.red.shade700
+                                    : AppColors.brandRed),
                           ),
                         ),
                       ),

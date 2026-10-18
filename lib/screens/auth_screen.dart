@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool initialIsSignUp;
@@ -58,6 +59,69 @@ class _AuthScreenState extends State<AuthScreen>
     );
 
     _loadRememberedCredentials();
+  }
+
+  Future<void> signInWithFacebook() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final LoginResult result = await FacebookAuth.instance.login(
+        permissions: ['public_profile'],
+      );
+
+      if (result.status == LoginStatus.success) {
+        final OAuthCredential credential =
+            FacebookAuthProvider.credential(result.accessToken!.tokenString);
+
+        final userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+        final user = userCredential.user;
+        final idToken = await user?.getIdToken();
+
+        if (user != null && idToken != null) {
+          final email = user.email ?? '${user.uid}@facebook.com';
+          final name = user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : 'Facebook User';
+
+          await saveCredentials(User(
+            token: idToken,
+            email: email,
+            name: name,
+          ));
+
+          await RestApi.updateUserProfile(
+            email: email,
+            name: name,
+            phone: '',
+            address: '',
+          );
+
+          RestApi.currentUserRole = 'customer';
+          await UserProfileManager.saveUserRole('customer');
+          UserProfileManager.updateProfile(
+            name: name,
+            email: email,
+            phone: '',
+            role: 'customer',
+          );
+        }
+
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      } else if (result.status != LoginStatus.cancelled) {
+        _showErrorDialog(result.message ?? 'Facebook sign-in failed.');
+      }
+    } catch (e) {
+      _showErrorDialog('Facebook login error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> sendPhoneCode(String phoneNumber) async {
@@ -992,7 +1056,8 @@ class _AuthScreenState extends State<AuthScreen>
                             const SizedBox(width: 12),
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: () {},
+                                onPressed:
+                                    _isLoading ? null : signInWithFacebook,
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
