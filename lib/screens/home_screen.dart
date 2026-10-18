@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   RangeValues _priceRange = const RangeValues(0.0, 25.0);
-  String _sortBy = 'Popular';
+  String _sortBy = 'Default';
 
   final List<Map<String, dynamic>> _categories = [
     {'title': 'All', 'icon': Icons.restaurant_menu},
@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedCategory != 'All' ||
       _priceRange.start > 0 ||
       _priceRange.end < 25.0 ||
-      _sortBy != 'Popular';
+      _sortBy != 'Default';
 
   @override
   void dispose() {
@@ -140,10 +140,16 @@ class _HomeScreenState extends State<HomeScreen> {
           p.category.toLowerCase().contains(_searchQuery.toLowerCase());
       final matchesPrice =
           p.price >= _priceRange.start && p.price <= _priceRange.end;
-      return matchesCategory && matchesSearch && matchesPrice;
+
+      // ✅ Only filter by isPopular if the user specifically chose 'Popular'
+      final matchesPopular = (_sortBy != 'Popular') || p.isPopular;
+
+      return matchesCategory && matchesSearch && matchesPrice && matchesPopular;
     }).toList();
 
-    if (_sortBy == 'Price: Low to High') {
+    if (_sortBy == 'Popular') {
+      list.sort((a, b) => b.rating.compareTo(a.rating));
+    } else if (_sortBy == 'Price: Low to High') {
       list.sort((a, b) => a.price.compareTo(b.price));
     } else if (_sortBy == 'Price: High to Low') {
       list.sort((a, b) => b.price.compareTo(a.price));
@@ -244,7 +250,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   p.category.toLowerCase().contains(_searchQuery.toLowerCase());
               final matchesPrice = p.price >= tempPriceRange.start &&
                   p.price <= tempPriceRange.end;
-              return matchesCategory && matchesSearch && matchesPrice;
+
+              // ✅ Include popular filter in sheet count
+              final matchesPopular = (tempSortBy != 'Popular') || p.isPopular;
+
+              return matchesCategory &&
+                  matchesSearch &&
+                  matchesPrice &&
+                  matchesPopular;
             }).length;
 
             return DraggableScrollableSheet(
@@ -293,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               setModalState(() {
                                 tempCategory = 'All';
                                 tempPriceRange = const RangeValues(0.0, 25.0);
-                                tempSortBy = 'Popular';
+                                tempSortBy = 'Default';
                               });
                             },
                             child: Text(
@@ -484,6 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
+                          'Default',
                           'Popular',
                           'Price: Low to High',
                           'Price: High to Low',
@@ -1319,7 +1333,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             ),
                           ),
-                        if (_sortBy != 'Popular')
+                        if (_sortBy != 'Default')
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: InputChip(
@@ -1336,7 +1350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               deleteIconColor: Colors.black54,
                               onDeleted: () {
                                 setState(() {
-                                  _sortBy = 'Popular';
+                                  _sortBy = 'Default';
                                 });
                               },
                             ),
@@ -1410,7 +1424,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               setState(() {
                                 _selectedCategory = 'All';
                                 _priceRange = const RangeValues(0.0, 25.0);
-                                _sortBy = 'Popular';
+                                _sortBy = 'Default';
                                 _searchQuery = '';
                                 _searchController.clear();
                               });

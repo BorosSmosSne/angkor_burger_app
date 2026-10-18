@@ -899,7 +899,9 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
 
   Widget _buildProductCard(ProductModel burger) {
     Widget badge;
-    if (burger.category.toLowerCase().contains('wing') ||
+    if (burger.isPopular) {
+      badge = _buildTag('Popular', const Color(0xFFFDEEEC), burgundy);
+    } else if (burger.category.toLowerCase().contains('wing') ||
         burger.name.toLowerCase().contains('wing')) {
       badge = _buildTag(
           'Chef Choice', const Color(0xFFFFF7E6), const Color(0xFFD48806));
@@ -908,7 +910,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
         burger.price < 5.0) {
       badge = _buildTag('Side', Colors.grey.shade100, Colors.black54);
     } else {
-      badge = _buildTag('Popular', const Color(0xFFFDEEEC), burgundy);
+      badge = _buildTag('Standard', Colors.grey.shade100, Colors.black54);
     }
 
     return Container(

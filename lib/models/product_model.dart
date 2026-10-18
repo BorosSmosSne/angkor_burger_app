@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class ProductModel {
   final int id;
   final String name;
@@ -9,7 +11,7 @@ class ProductModel {
   final bool isActive;
   final bool isPopular;
   final bool isInStock;
-  final int stockQuantity; // Added numeric stock
+  final int stockQuantity;
   final Map<String, double> sizePrices;
   final Map<String, double> addOns;
   final List<String> ingredients;
@@ -27,7 +29,7 @@ class ProductModel {
     this.isActive = true,
     this.isPopular = false,
     this.isInStock = true,
-    this.stockQuantity = 0, // Default to 0
+    this.stockQuantity = 0,
     required this.sizePrices,
     required this.addOns,
     this.ingredients = const [],
@@ -36,12 +38,11 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-    // 1. Parse sizes from API
+    // 1. Parse Sizes / Portions
     final Map<String, double> parsedSizes = {};
-    if (json['sizes'] != null &&
-        json['sizes'] is List &&
-        (json['sizes'] as List).isNotEmpty) {
-      for (final s in (json['sizes'] as List)) {
+    final rawSizes = json['sizes'];
+    if (rawSizes != null && rawSizes is List && rawSizes.isNotEmpty) {
+      for (final s in rawSizes) {
         if (s is Map) {
           final sName =
               s['size_name']?.toString() ?? s['name']?.toString() ?? 'M';
@@ -51,7 +52,7 @@ class ProductModel {
       }
     }
 
-// 2. Best Solution Fallback: If API has no sizes, generate standard tier pricing from API base_price
+    // Default tiered pricing fallback if API has no explicit size objects
     if (parsedSizes.isEmpty) {
       final double base = double.tryParse(
               (json['base_price'] ?? json['price'] ?? 0).toString()) ??
@@ -61,11 +62,11 @@ class ProductModel {
       parsedSizes['L'] = double.parse((base + 3.00).toStringAsFixed(2));
     }
 
-    // 2. Parse addons
+    // 2. Parse Add-ons
     final Map<String, double> parsedAddons = {};
     final rawAddons = json['addons'] ?? json['add_ons'] ?? json['addOns'];
     if (rawAddons != null && rawAddons is List) {
-      for (final a in (rawAddons as List)) {
+      for (final a in rawAddons) {
         if (a is Map) {
           final aName = a['name']?.toString() ?? '';
           final aPrice = double.tryParse((a['price'] ?? 0).toString()) ?? 0.0;
@@ -76,30 +77,48 @@ class ProductModel {
       }
     }
 
-    // 3. Nutrition facts
-    final cal = json['calories']?.toString() ?? '0';
-    final pro = json['protein']?.toString() ?? '0g';
+    // 3. Nutrition Facts
+    final cal = json['calories']?.toString() ?? '800';
+    final pro = json['protein']?.toString() ?? '30g';
     final nutrition = '$cal kcal • $pro Protein';
 
-    // 4. Image path
-    // String rawImage =
-    //     (json['image_url'] ?? json['imagePath'] ?? '').toString().trim();
-    // String finalImagePath;
-    // if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
-    //   finalImagePath = rawImage;
-    // } else if (rawImage.isNotEmpty) {
-    //   if (rawImage.startsWith('assets/assets/')) {
-    //     finalImagePath = rawImage.replaceFirst('assets/assets/', 'assets/');
-    //   } else if (!rawImage.startsWith('assets/')) {
-    //     finalImagePath = 'assets/$rawImage';
-    //   } else {
-    //     finalImagePath = rawImage;
-    //   }
-    // } else {
-    //   finalImagePath = 'assets/images/imagelist1.jpg';
-    // }
+    // 4. Safe Cross-Platform Image URL Resolver
+    String rawImage = (json['image_url'] ??
+            json['imagePath'] ??
+            json['image'] ??
+            json['image_path'] ??
+            '')
+        .toString()
+        .trim();
 
-    // 5. Category
+    String finalImage;
+    if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
+      // Re-route localhost/127.0.0.1 to 10.0.2.2 ONLY on Android Emulators
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        rawImage = rawImage
+            .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
+            .replaceAll('localhost:8000', '10.0.2.2:8000')
+            .replaceAll('127.0.0.1', '10.0.2.2')
+            .replaceAll('localhost', '10.0.2.2');
+      }
+      finalImage = Uri.encodeFull(rawImage);
+    } else if (rawImage.startsWith('uploads/') ||
+        rawImage.startsWith('/uploads/')) {
+      final host = (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
+          ? '10.0.2.2:8000'
+          : '127.0.0.1:8000';
+      final cleanPath =
+          rawImage.startsWith('/') ? rawImage.substring(1) : rawImage;
+      finalImage = 'http://$host/$cleanPath';
+    } else if (rawImage.isNotEmpty &&
+        !rawImage.contains('assets/images/imagelist1.jpg')) {
+      finalImage =
+          rawImage.startsWith('assets/') ? rawImage : 'assets/$rawImage';
+    } else {
+      finalImage = 'assets/images/imagelist1.jpg';
+    }
+
+    // 5. Parse Category
     String parsedCategory = 'All';
     if (json['category'] != null) {
       if (json['category'] is Map) {
@@ -111,10 +130,8 @@ class ProductModel {
       parsedCategory = json['category_name'].toString();
     }
 
-    if (parsedCategory.isEmpty && json['category_name'] != null) {
-      parsedCategory = json['category_name'].toString().trim();
-    }
-    if (parsedCategory.isEmpty) {
+    parsedCategory = parsedCategory.trim();
+    if (parsedCategory.isEmpty || parsedCategory.toLowerCase() == 'null') {
       final nameLower = (json['name'] ?? '').toString().toLowerCase();
       if (nameLower.contains('wing') || nameLower.contains('chicken')) {
         parsedCategory = 'Chicken & Wings';
@@ -123,103 +140,35 @@ class ProductModel {
           nameLower.contains('drink')) {
         parsedCategory = 'Sides & Wings';
       } else {
-        parsedCategory = 'Burgers (Gourmet Series)';
+        parsedCategory = 'Burgers';
       }
     }
 
-    // // 6. Booleans & numeric stock
-    // bool parseBool(dynamic val, {bool defaultValue = false}) {
-    //   if (val == null) return defaultValue;
-    //   if (val is bool) return val;
-    //   if (val is num) return val != 0;
-    //   final s = val.toString().trim().toLowerCase();
-    //   if (s == '1' || s == 'true') return true;
-    //   if (s == '0' || s == 'false') return false;
-    //   return defaultValue;
-    // }
-
-    // final bool parsedActive = parseBool(
-    //   json['is_active'] ?? json['isActive'],
-    //   defaultValue: true,
-    // );
-
-    // final bool parsedPopular = parseBool(
-    //   json['is_popular'] ?? json['isPopular'],
-    //   defaultValue: false,
-    // );
-
-    // final int parsedStock = int.tryParse(
-    //       (json['stock_quantity'] ?? json['stock'] ?? 0).toString(),
-    //     ) ??
-    //     0;
-
-    // final rawInStock = json['is_in_stock'];
-    // final bool parsedInStock = rawInStock == null
-    //     ? parsedStock > 0
-    //     : (rawInStock == 1 || rawInStock == true || rawInStock == '1');
-
-    // return ProductModel(
-    //   id: json['id'] is int
-    //       ? json['id']
-    //       : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-    //   name: json['name']?.toString() ?? '',
-    //   price: double.tryParse(
-    //           (json['base_price'] ?? json['price'] ?? 0).toString()) ??
-    //       0.0,
-    //   rating: double.tryParse((json['rating'] ?? 5.0).toString()) ?? 5.0,
-    //   imagePath: finalImagePath,
-    //   description: json['description']?.toString() ??
-    //       'Delicious handcrafted burger with fresh ingredients.',
-    //   category: parsedCategory,
-    //   isActive: parsedActive,
-    //   isPopular: parsedPopular,
-    //   isInStock: parsedInStock,
-    //   stockQuantity: parsedStock,
-    //   sizePrices: parsedSizes.isNotEmpty
-    //       ? parsedSizes
-    //       : {
-    //           'Regular':
-    //               double.tryParse((json['base_price'] ?? 0).toString()) ?? 0.0
-    //         },
-    //   addOns: parsedAddons,
-    //   ingredients: json['ingredients'] != null && json['ingredients'] is List
-    //       ? List<String>.from(json['ingredients'].map((e) => e.toString()))
-    //       : [],
-    //   nutritionFacts: nutrition,
-    //   specialInstruction: json['special_instruction']?.toString(),
-    // );
-    // 4. Safe Image Path
-    String rawImage =
-        (json['image_url'] ?? json['imagePath'] ?? json['image'] ?? '')
-            .toString()
-            .trim();
-
-    String finalImage;
-    if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
-      // Android emulator maps 10.0.2.2 to the PC host's localhost (127.0.0.1)
-      rawImage = rawImage
-          .replaceAll('127.0.0.1', '10.0.2.2')
-          .replaceAll('localhost', '10.0.2.2');
-
-      finalImage = Uri.encodeFull(rawImage);
-    } else if (rawImage.isNotEmpty) {
-      finalImage =
-          rawImage.startsWith('assets/') ? rawImage : 'assets/$rawImage';
-    } else {
-      finalImage = 'assets/images/imagelist1.jpg';
+    // 6. Resilient Boolean Helper
+    bool parseBool(dynamic val, {bool defaultValue = false}) {
+      if (val == null) return defaultValue;
+      if (val is bool) return val;
+      if (val is num) return val != 0;
+      final str = val.toString().trim().toLowerCase();
+      if (str == '1' || str == 'true' || str == 'yes') return true;
+      if (str == '0' || str == 'false' || str == 'no') return false;
+      return defaultValue;
     }
 
-    // 5. Safe Booleans
-    final rawActive = json['is_active'] ?? json['isActive'] ?? 1;
-    final bool active = rawActive == 1 || rawActive == true || rawActive == '1';
+    final bool active = parseBool(
+      json['is_active'] ?? json['isActive'] ?? json['active'],
+      defaultValue: true,
+    );
 
-    final rawPopular = json['is_popular'] ?? json['isPopular'] ?? 0;
-    final bool popular =
-        rawPopular == 1 || rawPopular == true || rawPopular == '1';
+    final bool popular = parseBool(
+      json['is_popular'] ?? json['isPopular'] ?? json['popular'],
+      defaultValue: false,
+    );
 
-    final rawInStock = json['is_in_stock'] ?? json['isInStock'] ?? 1;
-    final bool inStock =
-        rawInStock == 1 || rawInStock == true || rawInStock == '1';
+    final bool inStock = parseBool(
+      json['is_in_stock'] ?? json['isInStock'] ?? json['in_stock'],
+      defaultValue: true,
+    );
 
     return ProductModel(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
@@ -236,14 +185,14 @@ class ProductModel {
       ingredients: json['ingredients'] != null && json['ingredients'] is List
           ? List<String>.from(json['ingredients'].map((x) => x.toString()))
           : [],
-      nutritionFacts:
-          '${json['calories'] ?? 800} kcal • ${json['protein'] ?? '30g'} protein',
+      nutritionFacts: nutrition,
       specialInstruction: json['special_instruction']?.toString(),
       isActive: active,
       isInStock: inStock,
       isPopular: popular,
-      stockQuantity:
-          int.tryParse((json['stock_quantity'] ?? 10).toString()) ?? 10,
+      stockQuantity: int.tryParse(
+              (json['stock_quantity'] ?? json['stock'] ?? 10).toString()) ??
+          10,
     );
   }
 
