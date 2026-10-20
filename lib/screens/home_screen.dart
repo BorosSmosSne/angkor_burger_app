@@ -66,13 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _checkStaffRedirect() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final prefs = await SharedPreferences.getInstance();
-      final savedRole = (prefs.getString('angkor.pos.user_role') ??
-              prefs.getString('user_role') ??
-              UserProfileManager.profileNotifier.value.role)
-          .toLowerCase();
+      final savedRole =
+          (prefs.getString('angkor.pos.user_role') ??
+                  prefs.getString('user_role') ??
+                  UserProfileManager.profileNotifier.value.role)
+              .toLowerCase();
 
-      final currentRole =
-          UserProfileManager.profileNotifier.value.role.toLowerCase();
+      final currentRole = UserProfileManager.profileNotifier.value.role
+          .toLowerCase();
 
       if (savedRole == 'staff' && currentRole == 'staff') {
         if (mounted) {
@@ -132,9 +133,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<ProductModel> get _filteredProducts {
     final list = _loadedProducts.where((p) {
-      final matchesCategory = _selectedCategory == 'All' ||
+      final matchesCategory =
+          _selectedCategory == 'All' ||
           _matchesCategory(p.category, _selectedCategory);
-      final matchesSearch = _searchQuery.isEmpty ||
+      final matchesSearch =
+          _searchQuery.isEmpty ||
           p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           p.description.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           p.category.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -240,15 +243,18 @@ class _HomeScreenState extends State<HomeScreen> {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             final matchingCount = _loadedProducts.where((p) {
-              final matchesCategory = tempCategory == 'All' ||
+              final matchesCategory =
+                  tempCategory == 'All' ||
                   _matchesCategory(p.category, tempCategory);
-              final matchesSearch = _searchQuery.isEmpty ||
+              final matchesSearch =
+                  _searchQuery.isEmpty ||
                   p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                  p.description
-                      .toLowerCase()
-                      .contains(_searchQuery.toLowerCase()) ||
+                  p.description.toLowerCase().contains(
+                    _searchQuery.toLowerCase(),
+                  ) ||
                   p.category.toLowerCase().contains(_searchQuery.toLowerCase());
-              final matchesPrice = p.price >= tempPriceRange.start &&
+              final matchesPrice =
+                  p.price >= tempPriceRange.start &&
                   p.price <= tempPriceRange.end;
 
               // ✅ Include popular filter in sheet count
@@ -288,8 +294,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.tune,
-                                  color: AppColors.brandRed, size: 22),
+                              Icon(
+                                Icons.tune,
+                                color: AppColors.brandRed,
+                                size: 22,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Filter & Adjust',
@@ -378,7 +387,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.brandLightRed,
                               borderRadius: BorderRadius.circular(12),
@@ -400,8 +411,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           activeTrackColor: AppColors.brandRed,
                           inactiveTrackColor: AppColors.brandLightRed,
                           thumbColor: AppColors.brandRed,
-                          overlayColor:
-                              AppColors.brandRed.withValues(alpha: 0.15),
+                          overlayColor: AppColors.brandRed.withValues(
+                            alpha: 0.15,
+                          ),
                           rangeValueIndicatorShape:
                               const PaddleRangeSliderValueIndicatorShape(),
                           valueIndicatorColor: AppColors.brandRed,
@@ -433,7 +445,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           _buildPricePresetChip(
                             label: 'All (\$0-\$25)',
-                            isSelected: tempPriceRange.start == 0.0 &&
+                            isSelected:
+                                tempPriceRange.start == 0.0 &&
                                 tempPriceRange.end == 25.0,
                             onTap: () {
                               setModalState(() {
@@ -443,7 +456,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           _buildPricePresetChip(
                             label: 'Under \$4',
-                            isSelected: tempPriceRange.start == 0.0 &&
+                            isSelected:
+                                tempPriceRange.start == 0.0 &&
                                 tempPriceRange.end == 4.0,
                             onTap: () {
                               setModalState(() {
@@ -453,7 +467,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           _buildPricePresetChip(
                             label: '\$4 - \$8',
-                            isSelected: tempPriceRange.start == 4.0 &&
+                            isSelected:
+                                tempPriceRange.start == 4.0 &&
                                 tempPriceRange.end == 8.0,
                             onTap: () {
                               setModalState(() {
@@ -463,7 +478,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           _buildPricePresetChip(
                             label: '\$8 - \$15',
-                            isSelected: tempPriceRange.start == 8.0 &&
+                            isSelected:
+                                tempPriceRange.start == 8.0 &&
                                 tempPriceRange.end == 15.0,
                             onTap: () {
                               setModalState(() {
@@ -473,7 +489,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           _buildPricePresetChip(
                             label: '\$15+',
-                            isSelected: tempPriceRange.start == 15.0 &&
+                            isSelected:
+                                tempPriceRange.start == 15.0 &&
                                 tempPriceRange.end == 25.0,
                             onTap: () {
                               setModalState(() {
@@ -496,43 +513,46 @@ class _HomeScreenState extends State<HomeScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [
-                          'Default',
-                          'Popular',
-                          'Price: Low to High',
-                          'Price: High to Low',
-                          'Rating: High to Low'
-                        ].map((sortOption) {
-                          final isSelected = tempSortBy == sortOption;
-                          return ChoiceChip(
-                            label: Text(sortOption),
-                            selected: isSelected,
-                            selectedColor: AppColors.brandRed,
-                            backgroundColor: Colors.grey.shade100,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black87,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppColors.brandRed
-                                    : Colors.grey.shade200,
-                              ),
-                            ),
-                            onSelected: (selected) {
-                              if (selected) {
-                                setModalState(() {
-                                  tempSortBy = sortOption;
-                                });
-                              }
-                            },
-                          );
-                        }).toList(),
+                        children:
+                            [
+                              'Default',
+                              'Popular',
+                              'Price: Low to High',
+                              'Price: High to Low',
+                              'Rating: High to Low',
+                            ].map((sortOption) {
+                              final isSelected = tempSortBy == sortOption;
+                              return ChoiceChip(
+                                label: Text(sortOption),
+                                selected: isSelected,
+                                selectedColor: AppColors.brandRed,
+                                backgroundColor: Colors.grey.shade100,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                  fontSize: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? AppColors.brandRed
+                                        : Colors.grey.shade200,
+                                  ),
+                                ),
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    setModalState(() {
+                                      tempSortBy = sortOption;
+                                    });
+                                  }
+                                },
+                              );
+                            }).toList(),
                       ),
                       const SizedBox(height: 28),
                       SizedBox(
@@ -612,8 +632,9 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isSelected = false,
   }) {
     final effectiveBrandRed = isSelected ? Colors.white : AppColors.brandRed;
-    final effectiveBg =
-        isSelected ? AppColors.brandRed : AppColors.brandLightRed;
+    final effectiveBg = isSelected
+        ? AppColors.brandRed
+        : AppColors.brandLightRed;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -724,8 +745,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _navigateToCart();
               },
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.brandRed,
                   borderRadius: BorderRadius.circular(20),
@@ -815,8 +838,9 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 8,
       width: isActive ? 24 : 8,
       decoration: BoxDecoration(
-        color:
-            isActive ? AppColors.brandRed : Colors.white.withValues(alpha: 0.7),
+        color: isActive
+            ? AppColors.brandRed
+            : Colors.white.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -854,31 +878,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onNavigateToTab: _onBottomNavTapped,
             onContinueShopping: () => _onBottomNavTapped(0),
           ),
-          // ValueListenableBuilder<UserProfileModel>(
-          //   valueListenable: UserProfileManager.profileNotifier,
-          //   builder: (context, profile, _) {
-          //     final role = profile.role.toLowerCase();
-          //     final bool isStaffOrAdmin = role == 'staff' ||
-          //         role == 'admin' ||
-          //         RestApi.currentUserRole.toLowerCase() == 'staff' ||
-          //         RestApi.currentUserRole.toLowerCase() == 'admin' ||
-          //         UserProfileManager.isAdmin;
-
-          //     if (isStaffOrAdmin) {
-          //       return const StaffKitchenScreen();
-          //     }
-
-          //     return OrderScreen(
-          //       cartItems: _cartItems,
-          //       onAddToCart: _addToCart,
-          //       onUpdateCartQuantity: _updateCartQuantity,
-          //       onRemoveCartItem: _removeFromCart,
-          //       onClearCart: _clearCart,
-          //       showBottomNav: false,
-          //       onNavigateToTab: _onBottomNavTapped,
-          //     );
-          //   },
-          // ),
           // ✅ Tab 3 in HomeScreen is ALWAYS Customer Orders:
           OrderScreen(
             cartItems: _cartItems,
@@ -907,154 +906,158 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         ValueListenableBuilder<UserProfileModel>(
-            valueListenable: UserProfileManager.profileNotifier,
-            builder: (context, profile, _) {
-              return AngkorAppBar(
-                actions: [
-                  if (UserProfileManager.isAdmin)
-                    IconButton(
-                      tooltip: 'Manage Catalog (Admin)',
-                      icon: const Icon(
-                        Icons.inventory_2_outlined,
-                        color: Color(0xFF7A1C1C),
-                        size: 22,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const BurgerMenuScreen()),
-                        );
-                      },
-                    )
-                  else ...[
-                    IconButton(
-                      tooltip: 'Notifications',
-                      icon: const Icon(
-                        Icons.notifications_none_rounded,
-                        color: Colors.black87,
-                        size: 24,
-                      ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('No new notifications'),
-                            duration: Duration(seconds: 1),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      },
+          valueListenable: UserProfileManager.profileNotifier,
+          builder: (context, profile, _) {
+            return AngkorAppBar(
+              actions: [
+                if (UserProfileManager.isAdmin)
+                  IconButton(
+                    tooltip: 'Manage Catalog (Admin)',
+                    icon: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: Color(0xFF7A1C1C),
+                      size: 22,
                     ),
-                    // Reactive Favorite Button with Count Badge & Color Change
-                    ValueListenableBuilder<Set<String>>(
-                      valueListenable:
-                          FavoritesManager.favoriteProductNamesNotifier,
-                      builder: (context, favNames, _) {
-                        final int count = favNames.length;
-                        final bool hasFavorites = count > 0;
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BurgerMenuScreen(),
+                        ),
+                      );
+                    },
+                  )
+                else ...[
+                  IconButton(
+                    tooltip: 'Notifications',
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      color: Colors.black87,
+                      size: 24,
+                    ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No new notifications'),
+                          duration: Duration(seconds: 1),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  // Reactive Favorite Button with Count Badge & Color Change
+                  ValueListenableBuilder<Set<String>>(
+                    valueListenable:
+                        FavoritesManager.favoriteProductNamesNotifier,
+                    builder: (context, favNames, _) {
+                      final int count = favNames.length;
+                      final bool hasFavorites = count > 0;
 
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FavoritesScreen(
-                                  cartItems: _cartItems,
-                                  onAddToCart: _addToCart,
-                                  onUpdateCartQuantity: _updateCartQuantity,
-                                  onRemoveCartItem: _removeFromCart,
-                                  onClearCart: _clearCart,
-                                  onNavigateToTab: _onBottomNavTapped,
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FavoritesScreen(
+                                cartItems: _cartItems,
+                                onAddToCart: _addToCart,
+                                onUpdateCartQuantity: _updateCartQuantity,
+                                onRemoveCartItem: _removeFromCart,
+                                onClearCart: _clearCart,
+                                onNavigateToTab: _onBottomNavTapped,
+                              ),
+                            ),
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 8,
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            alignment: Alignment.center,
+                            children: [
+                              // Circular background bubble (Peach/Pink when active, Grey when empty)
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: hasFavorites
+                                      ? const Color(0xFFFDEEEC)
+                                      : Colors.grey.shade100,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  hasFavorites
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                  color: hasFavorites
+                                      ? const Color(0xFF7A1C1C)
+                                      : Colors.black87,
+                                  size: 20,
                                 ),
                               ),
-                            ).then((_) {
-                              if (mounted) setState(() {});
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 8),
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.center,
-                              children: [
-                                // Circular background bubble (Peach/Pink when active, Grey when empty)
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: hasFavorites
-                                        ? const Color(0xFFFDEEEC)
-                                        : Colors.grey.shade100,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    hasFavorites
-                                        ? Icons.favorite_rounded
-                                        : Icons.favorite_border_rounded,
-                                    color: hasFavorites
-                                        ? const Color(0xFF7A1C1C)
-                                        : Colors.black87,
-                                    size: 20,
-                                  ),
-                                ),
 
-                                // Red notification count badge
-                                if (hasFavorites)
-                                  Positioned(
-                                    top: -2,
-                                    right: -3,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 18,
-                                        minHeight: 18,
-                                      ),
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF7A1C1C),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        '$count',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          height: 1.0,
-                                        ),
+                              // Red notification count badge
+                              if (hasFavorites)
+                                Positioned(
+                                  top: -2,
+                                  right: -3,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF7A1C1C),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '$count',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.0,
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                  const SizedBox(width: 8),
+                        ),
+                      );
+                    },
+                  ),
                 ],
-                onFavoritePressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FavoritesScreen(
-                        cartItems: _cartItems,
-                        onAddToCart: _addToCart,
-                        onUpdateCartQuantity: _updateCartQuantity,
-                        onRemoveCartItem: _removeFromCart,
-                        onClearCart: _clearCart,
-                        onNavigateToTab: _onBottomNavTapped,
-                      ),
+                const SizedBox(width: 8),
+              ],
+              onFavoritePressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FavoritesScreen(
+                      cartItems: _cartItems,
+                      onAddToCart: _addToCart,
+                      onUpdateCartQuantity: _updateCartQuantity,
+                      onRemoveCartItem: _removeFromCart,
+                      onClearCart: _clearCart,
+                      onNavigateToTab: _onBottomNavTapped,
                     ),
-                  ).then((_) {
-                    if (mounted) setState(() {});
-                  });
-                },
-              );
-            }),
+                  ),
+                ).then((_) {
+                  if (mounted) setState(() {});
+                });
+              },
+            );
+          },
+        ),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -1125,8 +1128,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             color: Colors.amber,
                                             shape: BoxShape.circle,
                                             border: Border.all(
-                                                color: Colors.white,
-                                                width: 1.5),
+                                              color: Colors.white,
+                                              width: 1.5,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -1166,11 +1170,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: double.infinity,
                           errorBuilder: (context, error, stackTrace) =>
                               Container(
-                            height: 180,
-                            width: double.infinity,
-                            color: Colors.grey.shade300,
-                            child: const Icon(Icons.image, size: 48),
-                          ),
+                                height: 180,
+                                width: double.infinity,
+                                color: Colors.grey.shade300,
+                                child: const Icon(Icons.image, size: 48),
+                              ),
                         ),
                       ),
                     );
@@ -1180,8 +1184,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     autoPlay: true,
                     viewportFraction: 1.0,
                     autoPlayInterval: const Duration(seconds: 4),
-                    autoPlayAnimationDuration:
-                        const Duration(milliseconds: 800),
+                    autoPlayAnimationDuration: const Duration(
+                      milliseconds: 800,
+                    ),
                     autoPlayCurve: Curves.fastOutSlowIn,
                     onPageChanged: (index, reason) {
                       setState(() {
@@ -1313,8 +1318,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: InputChip(
-                              avatar: const Icon(Icons.attach_money,
-                                  size: 14, color: AppColors.brandRed),
+                              avatar: const Icon(
+                                Icons.attach_money,
+                                size: 14,
+                                color: AppColors.brandRed,
+                              ),
                               label: Text(
                                 '\$${_priceRange.start.toStringAsFixed(1)} - \$${_priceRange.end.toStringAsFixed(1)}',
                               ),
@@ -1337,8 +1345,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: InputChip(
-                              avatar: const Icon(Icons.sort,
-                                  size: 14, color: Colors.black87),
+                              avatar: const Icon(
+                                Icons.sort,
+                                size: 14,
+                                color: Colors.black87,
+                              ),
                               label: Text(_sortBy),
                               selected: false,
                               backgroundColor: Colors.grey.shade100,
@@ -1375,8 +1386,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Column(
                         children: [
-                          const Icon(Icons.error_outline,
-                              size: 48, color: Colors.redAccent),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.redAccent,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'Failed to load products:\n$_errorMessage',
@@ -1392,8 +1406,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.brandRed,
                             ),
-                            child: const Text('Try Again',
-                                style: TextStyle(color: Colors.white)),
+                            child: const Text(
+                              'Try Again',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),
@@ -1405,8 +1421,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Column(
                         children: [
-                          Icon(Icons.search_off,
-                              size: 50, color: Colors.grey.shade400),
+                          Icon(
+                            Icons.search_off,
+                            size: 50,
+                            color: Colors.grey.shade400,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             _searchQuery.isNotEmpty
@@ -1429,13 +1448,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 _searchController.clear();
                               });
                             },
-                            icon: const Icon(Icons.refresh,
-                                size: 16, color: Colors.white),
+                            icon: const Icon(
+                              Icons.refresh,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                             label: const Text(
                               'Reset All Filters',
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.brandRed,
@@ -1443,7 +1466,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 18, vertical: 10),
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
                             ),
                           ),
                         ],
@@ -1458,11 +1483,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: _filteredProducts.length,
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
-                      childAspectRatio: 173 / 259,
-                    ),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 173 / 259,
+                        ),
                     itemBuilder: (context, index) {
                       final currentProduct = _filteredProducts[index];
                       return _buildProductCard(currentProduct);

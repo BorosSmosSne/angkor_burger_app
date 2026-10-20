@@ -70,11 +70,13 @@ class _AuthScreenState extends State<AuthScreen>
       );
 
       if (result.status == LoginStatus.success) {
-        final OAuthCredential credential =
-            FacebookAuthProvider.credential(result.accessToken!.tokenString);
+        final OAuthCredential credential = FacebookAuthProvider.credential(
+          result.accessToken!.tokenString,
+        );
 
-        final userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
+        final userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
         final user = userCredential.user;
         final idToken = await user?.getIdToken();
 
@@ -84,11 +86,7 @@ class _AuthScreenState extends State<AuthScreen>
               ? user.displayName!.trim()
               : 'Facebook User';
 
-          await saveCredentials(User(
-            token: idToken,
-            email: email,
-            name: name,
-          ));
+          await saveCredentials(User(token: idToken, email: email, name: name));
 
           await RestApi.updateUserProfile(
             email: email,
@@ -129,10 +127,8 @@ class _AuthScreenState extends State<AuthScreen>
 
     try {
       if (kIsWeb) {
-        final confirmationResult =
-            await FirebaseAuth.instance.signInWithPhoneNumber(
-          phoneNumber.trim(),
-        );
+        final confirmationResult = await FirebaseAuth.instance
+            .signInWithPhoneNumber(phoneNumber.trim());
         setState(() {
           _webConfirmationResult = confirmationResult;
           _isLoading = false;
@@ -177,8 +173,10 @@ class _AuthScreenState extends State<AuthScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Enter Verification Code',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Enter Verification Code',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: TextField(
           controller: otpController,
           keyboardType: TextInputType.number,
@@ -221,8 +219,9 @@ class _AuthScreenState extends State<AuthScreen>
           verificationId: _verificationId!,
           smsCode: smsCode.trim(),
         );
-        userCredential =
-            await FirebaseAuth.instance.signInWithCredential(credential);
+        userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential,
+        );
       } else {
         setState(() => _isLoading = false);
         return;
@@ -230,10 +229,9 @@ class _AuthScreenState extends State<AuthScreen>
 
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
-        await saveCredentials(User(
-          token: idToken,
-          email: userCredential.user?.phoneNumber ?? '',
-        ));
+        await saveCredentials(
+          User(token: idToken, email: userCredential.user?.phoneNumber ?? ''),
+        );
       }
 
       RestApi.currentUserRole = 'customer';
@@ -256,16 +254,17 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Future<void> _signInWithPhoneCredential(
-      PhoneAuthCredential credential) async {
-    final userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+    PhoneAuthCredential credential,
+  ) async {
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(
+      credential,
+    );
 
     final idToken = await userCredential.user?.getIdToken();
     if (idToken != null) {
-      await saveCredentials(User(
-        token: idToken,
-        phone: userCredential.user?.phoneNumber ?? '',
-      ));
+      await saveCredentials(
+        User(token: idToken, phone: userCredential.user?.phoneNumber ?? ''),
+      );
     }
 
     RestApi.currentUserRole = 'customer';
@@ -281,8 +280,9 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   void _showPhoneInputDialog() {
-    final TextEditingController phoneController =
-        TextEditingController(text: '+855');
+    final TextEditingController phoneController = TextEditingController(
+      text: '+855',
+    );
 
     showDialog(
       context: context,
@@ -314,8 +314,9 @@ class _AuthScreenState extends State<AuthScreen>
                 labelText: 'Phone Number',
                 hintText: '+855 12 345 678',
                 prefixIcon: const Icon(Icons.phone),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -330,7 +331,8 @@ class _AuthScreenState extends State<AuthScreen>
               backgroundColor: _brandRed,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               final number = phoneController.text.trim();
@@ -351,10 +353,12 @@ class _AuthScreenState extends State<AuthScreen>
     final bool remember =
         preferences.getBool('angkor.pos.remember_me') ?? false;
     if (remember) {
-      final String? savedEmail =
-          preferences.getString('angkor.pos.saved_email');
-      final String? savedPassword =
-          preferences.getString('angkor.pos.saved_password');
+      final String? savedEmail = preferences.getString(
+        'angkor.pos.saved_email',
+      );
+      final String? savedPassword = preferences.getString(
+        'angkor.pos.saved_password',
+      );
       if (mounted) {
         setState(() {
           _rememberMe = true;
@@ -386,9 +390,13 @@ class _AuthScreenState extends State<AuthScreen>
     if (_rememberMe || _keepSignedIn) {
       await preferences.setBool('angkor.pos.remember_me', true);
       await preferences.setString(
-          'angkor.pos.saved_email', _emailController.text.trim());
+        'angkor.pos.saved_email',
+        _emailController.text.trim(),
+      );
       await preferences.setString(
-          'angkor.pos.saved_password', _passwordController.text);
+        'angkor.pos.saved_password',
+        _passwordController.text,
+      );
     } else {
       await preferences.setBool('angkor.pos.remember_me', false);
       await preferences.remove('angkor.pos.saved_email');
@@ -400,16 +408,43 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
-      googleProvider.setCustomParameters({'prompt': 'select_account'});
+      UserCredential userCredential;
 
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      if (kIsWeb) {
+        final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        userCredential =
+            await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      } else {
+        // 1. Use the new standard constructor
+        final GoogleSignIn googleSignIn = GoogleSignIn.standard(
+          scopes: ['email', 'profile'],
+        );
+
+        // 2. Sign in
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          return; // User dismissed
+        }
+
+        // 3. Get Auth tokens
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        // In v7+, idToken is passed to GoogleAuthProvider.
+        // accessToken can be omitted or passed if available.
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+      }
 
       final user = userCredential.user;
-      final idToken = await userCredential.user?.getIdToken();
+      final idToken = await user?.getIdToken();
 
       if (user != null && idToken != null) {
         final email = user.email ?? '';
@@ -418,19 +453,15 @@ class _AuthScreenState extends State<AuthScreen>
             : 'Google User';
         final phone = user.phoneNumber ?? '';
 
-        await saveCredentials(User(
-          token: idToken,
-          email: email,
-          name: name,
-          phone: phone,
-        ));
+        await saveCredentials(
+          User(token: idToken, email: email, name: name, phone: phone),
+        );
 
         await RestApi.updateUserProfile(
           email: email,
           name: name,
           phone: phone,
           address: '',
-          role: 'customer',
         );
 
         RestApi.currentUserRole = 'customer';
@@ -459,69 +490,6 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
-  // Future<void> login() async {
-  //   final email = _emailController.text.trim();
-  //   final password = _passwordController.text.trim();
-
-  //   if (email.isEmpty || password.isEmpty) {
-  //     _showErrorDialog('Please enter your email and password.');
-  //     return;
-  //   }
-
-  //   setState(() => _isLoading = true);
-
-  //   try {
-  //     final userCredential =
-  //         await FirebaseAuth.instance.signInWithEmailAndPassword(
-  //       email: email,
-  //       password: password,
-  //     );
-
-  //     final idToken = await userCredential.user?.getIdToken();
-  //     if (idToken != null) {
-  //       await saveCredentials(User(token: idToken, email: email));
-  //     }
-
-  //     final backendUser = await RestApi.fetchUserProfile(email);
-  //     final String role =
-  //         backendUser?['role']?.toString().toLowerCase() ?? 'customer';
-
-  //     RestApi.currentUserRole = role;
-  //     await UserProfileManager.saveUserRole(role);
-  //     UserProfileManager.updateProfile(
-  //       name:
-  //           backendUser?['name'] ?? userCredential.user?.displayName ?? 'User',
-  //       email: email,
-  //       phone: backendUser?['phone'] ?? userCredential.user?.phoneNumber ?? '',
-  //       role: role,
-  //     );
-
-  //     if (!mounted) return;
-
-  //     if (role == 'admin' || role == 'staff') {
-  //       Navigator.pushAndRemoveUntil(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => const BurgerMenuScreen()),
-  //         (route) => false,
-  //       );
-  //     } else {
-  //       Navigator.pushAndRemoveUntil(
-  //         context,
-  //         MaterialPageRoute(builder: (context) => const HomeScreen()),
-  //         (route) => false,
-  //       );
-  //     }
-  //   } on FirebaseAuthException catch (e) {
-  //     _showErrorDialog(_getAuthErrorMessage(e));
-  //   } catch (e) {
-  //     _showErrorDialog('An unexpected error occurred. Please try again.');
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() => _isLoading = false);
-  //     }
-  //   }
-  // }
-
   Future<void> login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -535,11 +503,8 @@ class _AuthScreenState extends State<AuthScreen>
 
     try {
       // 1. First attempt Firebase Authentication
-      final userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
@@ -641,11 +606,8 @@ class _AuthScreenState extends State<AuthScreen>
     setState(() => _isLoading = true);
 
     try {
-      final userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final fullName = name.isNotEmpty ? name : 'User';
       await userCredential.user?.updateDisplayName(fullName);
@@ -672,11 +634,9 @@ class _AuthScreenState extends State<AuthScreen>
 
       final idToken = await userCredential.user?.getIdToken();
       if (idToken != null) {
-        await saveCredentials(User(
-          token: idToken,
-          name: fullName,
-          email: email,
-        ));
+        await saveCredentials(
+          User(token: idToken, name: fullName, email: email),
+        );
       }
 
       if (mounted) {
@@ -719,9 +679,7 @@ class _AuthScreenState extends State<AuthScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -729,14 +687,13 @@ class _AuthScreenState extends State<AuthScreen>
             children: [
               Text(
                 _animation.value > 0.5 ? 'Sign Up Failed' : 'Login Failed',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-              ),
+              Text(message, textAlign: TextAlign.center),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -909,8 +866,9 @@ class _AuthScreenState extends State<AuthScreen>
                                             : _rememberMe,
                                         activeColor: _brandRed,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         onChanged: (val) {
                                           setState(() {
@@ -971,8 +929,9 @@ class _AuthScreenState extends State<AuthScreen>
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _brandRed,
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor:
-                                  _brandRed.withValues(alpha: 0.6),
+                              disabledBackgroundColor: _brandRed.withValues(
+                                alpha: 0.6,
+                              ),
                               minimumSize: const Size(double.infinity, 52),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
@@ -1008,10 +967,12 @@ class _AuthScreenState extends State<AuthScreen>
                         Row(
                           children: [
                             Expanded(
-                                child: Divider(color: Colors.grey.shade300)),
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               child: Text(
                                 'or continue with',
                                 style: TextStyle(
@@ -1021,7 +982,8 @@ class _AuthScreenState extends State<AuthScreen>
                               ),
                             ),
                             Expanded(
-                                child: Divider(color: Colors.grey.shade300)),
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -1087,14 +1049,19 @@ class _AuthScreenState extends State<AuthScreen>
                                 onPressed:
                                     _isLoading ? null : _showPhoneInputDialog,
                                 style: OutlinedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14)),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                   side: BorderSide(color: Colors.grey.shade300),
                                 ),
-                                child: Icon(Icons.phone_iphone_rounded,
-                                    color: _brandRed, size: 22),
+                                child: Icon(
+                                  Icons.phone_iphone_rounded,
+                                  color: _brandRed,
+                                  size: 22,
+                                ),
                               ),
                             ),
                           ],
@@ -1194,10 +1161,9 @@ class _AuthScreenState extends State<AuthScreen>
                         child: Text(
                           'Sign Up',
                           style: TextStyle(
-                            fontFamily: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.fontFamily,
+                            fontFamily: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.fontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Color.lerp(
@@ -1218,10 +1184,9 @@ class _AuthScreenState extends State<AuthScreen>
                         child: Text(
                           'Log In',
                           style: TextStyle(
-                            fontFamily: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.fontFamily,
+                            fontFamily: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.fontFamily,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                             color: Color.lerp(

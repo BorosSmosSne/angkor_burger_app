@@ -188,23 +188,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           const StaffKitchenScreen(showAppBar: false),
         ],
       ),
-      // floatingActionButton: _currentBottomNavIndex == 0 && _isAdmin
-      //     ? FloatingActionButton(
-      //         backgroundColor: burgundy,
-      //         shape: const CircleBorder(),
-      //         elevation: 4,
-      //         onPressed: () async {
-      //           final result = await Navigator.push(
-      //             context,
-      //             MaterialPageRoute(
-      //                 builder: (context) => const AddProductScreen()),
-      //           );
-      //           if (result == true) _loadProducts();
-      //         },
-      //         child: const Icon(Icons.add, color: Colors.white, size: 28),
-      //       )
-      //     : null,
-      // To (Visible whenever on Catalog tab):
+      
       floatingActionButton: _currentBottomNavIndex == 0
           ? FloatingActionButton(
               backgroundColor: burgundy,
@@ -366,16 +350,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                   );
                 },
               ),
-              // Text(
-              //     _isOrdersTabSelected
-              //         ? 'Kitchen & Orders Display'
-              //         : (_isAdmin
-              //             ? 'Menu Catalog (Admin)'
-              //             : 'Staff Menu Catalog'),
-              //     style: const TextStyle(
-              //         fontSize: 12,
-              //         color: Colors.black54,
-              //         fontWeight: FontWeight.w500)),
+              
             ],
           ),
         ],
@@ -394,20 +369,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               );
             },
           ),
-        // IconButton(
-        //   icon: Icon(
-        //     _isOrdersTabSelected
-        //         ? Icons.restaurant_menu
-        //         : Icons.assignment_ind_outlined,
-        //     color: burgundy,
-        //   ),
-        //   tooltip: _isOrdersTabSelected ? 'Back to Catalog' : 'Kitchen Orders',
-        //   onPressed: () {
-        //     setState(() {
-        //       _currentBottomNavIndex = _isOrdersTabSelected ? 0 : 1;
-        //     });
-        //   },
-        // ),
+        
         PopupMenuButton<String>(
           tooltip: 'Account Menu',
           icon: const CircleAvatar(
@@ -1011,44 +973,7 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               ],
             ),
           ),
-          // if (_isAdmin)
-          //   Row(
-          //     mainAxisSize: MainAxisSize.min,
-          //     children: [
-          //       InkWell(
-          //         onTap: () async {
-          //           final result = await Navigator.push(
-          //             context,
-          //             MaterialPageRoute(
-          //               builder: (context) =>
-          //                   AddProductScreen(existingProduct: burger),
-          //             ),
-          //           );
-          //           if (result == true) _loadProducts();
-          //         },
-          //         borderRadius: BorderRadius.circular(16),
-          //         child: Container(
-          //           padding: const EdgeInsets.all(6),
-          //           decoration: const BoxDecoration(
-          //               color: Color(0xFFFDEEEC), shape: BoxShape.circle),
-          //           child: const Icon(Icons.edit_outlined,
-          //               size: 14, color: burgundy),
-          //         ),
-          //       ),
-          //       const SizedBox(width: 6),
-          //       InkWell(
-          //         onTap: () => _confirmDelete(burger),
-          //         borderRadius: BorderRadius.circular(16),
-          //         child: Container(
-          //           padding: const EdgeInsets.all(6),
-          //           decoration: BoxDecoration(
-          //               color: Colors.grey.shade100, shape: BoxShape.circle),
-          //           child: const Icon(Icons.delete_outline,
-          //               size: 14, color: Colors.grey),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
+          
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [

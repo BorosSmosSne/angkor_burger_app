@@ -62,7 +62,8 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('Gallery permission is required to save QR.')),
+                content: Text('Gallery permission is required to save QR.'),
+              ),
             );
           }
           return;
@@ -75,16 +76,14 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
       if (boundary == null) return;
 
       final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
       if (byteData == null) return;
       final Uint8List pngBytes = byteData.buffer.asUint8List();
 
       // 3. Save to device gallery
-      await Gal.putImageBytes(
-        pngBytes,
-        name: 'KHQR_${widget.tranId}',
-      );
+      await Gal.putImageBytes(pngBytes, name: 'KHQR_${widget.tranId}');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +98,9 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -129,8 +130,10 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
             ? '${widget.apiBaseUrl}/orders/${widget.orderId}/verify'
             : '${widget.apiBaseUrl}/check-transaction?tran_id=${widget.tranId}';
 
-        final res = await http
-            .get(Uri.parse(url), headers: {'Accept': 'application/json'});
+        final res = await http.get(
+          Uri.parse(url),
+          headers: {'Accept': 'application/json'},
+        );
 
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
@@ -138,7 +141,8 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
               (data['payment_status'] ?? data['data']?['payment_status'] ?? '')
                   .toString()
                   .toUpperCase();
-          final statusCode = data['payment_status_code'] ??
+          final statusCode =
+              data['payment_status_code'] ??
               data['data']?['payment_status_code'];
 
           if (status == 'PAID' || status == 'APPROVED' || statusCode == 0) {
@@ -181,8 +185,10 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
             _buildTopBar(),
             Expanded(
               child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Column(
                   children: [
                     _buildTicketCard(qrSize, amountFormatted),
@@ -206,9 +212,7 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
       height: 64,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFEAEAEA), width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFEAEAEA), width: 1)),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -216,8 +220,11 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
           Positioned(
             left: 8,
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new,
-                  color: Color(0xFF222222), size: 18),
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Color(0xFF222222),
+                size: 18,
+              ),
               onPressed: () => Navigator.pop(context, false),
             ),
           ),
@@ -450,38 +457,9 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        const Text(
-          'or',
-          style: TextStyle(fontSize: 12, color: Colors.black),
-        ),
+        const Text('or', style: TextStyle(fontSize: 12, color: Colors.black)),
         const SizedBox(height: 14),
-        // InkWell(
-        //   onTap: () {
-        //     ScaffoldMessenger.of(context).showSnackBar(
-        //       const SnackBar(content: Text('QR Code saved to gallery.')),
-        //     );
-        //   },
-        //   borderRadius: BorderRadius.circular(8),
-        //   child: const Padding(
-        //     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        //     child: Row(
-        //       mainAxisSize: MainAxisSize.min,
-        //       children: [
-        //         Icon(Icons.file_download_outlined,
-        //             color: downloadBlue, size: 24),
-        //         SizedBox(width: 8),
-        //         Text(
-        //           'Download QR',
-        //           style: TextStyle(
-        //             color: downloadBlue,
-        //             fontWeight: FontWeight.w600,
-        //             fontSize: 16,
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
+
         InkWell(
           onTap: _downloadQrCode, // Call the real save method
           borderRadius: BorderRadius.circular(8),
@@ -490,8 +468,11 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.file_download_outlined,
-                    color: downloadBlue, size: 24),
+                Icon(
+                  Icons.file_download_outlined,
+                  color: downloadBlue,
+                  size: 24,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Download QR',

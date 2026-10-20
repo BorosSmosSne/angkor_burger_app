@@ -1487,18 +1487,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: paymentMethod.brandColor, size: 18),
               ),
             const SizedBox(width: 10),
-            // Expanded(
-            //   child: Text(
-            //     paymentMethod.name,
-            //     maxLines: 1,
-            //     overflow: TextOverflow.ellipsis,
-            //     style: TextStyle(
-            //       fontSize: 13,
-            //       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            //       color: isSelected ? AppColors.brandRed : Colors.black87,
-            //     ),
-            //   ),
-            // ),
+            
             Expanded(
               child: Text(
                 (paymentMethod.name.toLowerCase().contains('card') &&

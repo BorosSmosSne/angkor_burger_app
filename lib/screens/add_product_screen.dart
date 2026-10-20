@@ -42,6 +42,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   //   'Sides & Wings',
   //   'Dessert',
   // ];
+
 // Categories list
   List<String> _categoryOptions = [];
   String? _selectedCategory;
@@ -162,35 +163,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _loadBackendCategories();
   }
 
-// Method to fetch all categories from MySQL into the dropdown list
-  // Future<void> _loadBackendCategories() async {
-  //   try {
-  //     final liveCategories = await RestApi.fetchCategories();
-  //     if (liveCategories.isNotEmpty && mounted) {
-  //       setState(() {
-  //         for (var cat in liveCategories) {
-  //           String name = '';
-  //           if (cat is Map) {
-  //             name = (cat['name'] ?? '').toString().trim();
-  //           } else {
-  //             name = cat.toString().trim();
-  //           }
-
-  //           if (name.isNotEmpty && !_categoryOptions.contains(name)) {
-  //             _categoryOptions.add(name);
-  //           }
-  //         }
-
-  //         // Keep the selected category consistent
-  //         if (!_categoryOptions.contains(_selectedCategory)) {
-  //           _categoryOptions.add(_selectedCategory);
-  //         }
-  //       });
-  //     }
-  //   } catch (e) {
-  //     debugPrint('Error loading backend categories: $e');
-  //   }
-  // }
 
   Future<void> _loadBackendCategories() async {
     try {
@@ -412,20 +384,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ),
           ],
         ),
-        // actions: [
-        //   // IconButton(
-        //   //   icon: const Icon(Icons.notifications_none, color: Colors.black54),
-        //   //   onPressed: () {},
-        //   // ),
-        //   const Padding(
-        //     padding: EdgeInsets.only(right: 14),
-        //     child: CircleAvatar(
-        //       radius: 16,
-        //       backgroundColor: burgundy,
-        //       child: Icon(Icons.person, color: Colors.white, size: 18),
-        //     ),
-        //   ),
-        // ],
+    
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

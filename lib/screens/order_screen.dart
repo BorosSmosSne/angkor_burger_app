@@ -56,7 +56,9 @@ class _OrderScreenState extends State<OrderScreen>
     _fetchOrders();
     // Poll every 5 seconds to sync kitchen state changes live
     _pollingTimer = Timer.periodic(
-        const Duration(seconds: 5), (_) => _fetchOrders(silent: true));
+      const Duration(seconds: 5),
+      (_) => _fetchOrders(silent: true),
+    );
   }
 
   @override
@@ -70,8 +72,8 @@ class _OrderScreenState extends State<OrderScreen>
     if (!silent) setState(() => _isLoading = true);
     try {
       // ✅ Pass current user's email or user_id to isolate order history
-      final currentEmail =
-          UserProfileManager.profileNotifier.value.email.trim();
+      final currentEmail = UserProfileManager.profileNotifier.value.email
+          .trim();
       final currentUserId = RestApi.currentUserId;
 
       final Uri uri = Uri.parse(
@@ -91,8 +93,9 @@ class _OrderScreenState extends State<OrderScreen>
         final past = <dynamic>[];
 
         for (final item in all) {
-          final status =
-              (item['order_status'] ?? 'placed').toString().toLowerCase();
+          final status = (item['order_status'] ?? 'placed')
+              .toString()
+              .toLowerCase();
           if (status == 'completed' || status == 'cancelled') {
             past.add(item);
           } else {
@@ -126,7 +129,9 @@ class _OrderScreenState extends State<OrderScreen>
     }
     if (index == 0) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
@@ -154,259 +159,12 @@ class _OrderScreenState extends State<OrderScreen>
         ),
       );
     } else if (index == 4) {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (_) => const UserProfileScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+      );
     }
   }
-
-// ✅ Order Details Modal Sheet
-  // void _showOrderDetailSheet(Map<String, dynamic> order) {
-  //   List<dynamic> items = [];
-  //   final rawItems = order['items'] ?? order['order_items'];
-
-  //   if (rawItems is List) {
-  //     items = rawItems;
-  //   } else if (rawItems is String && rawItems.isNotEmpty) {
-  //     try {
-  //       final decoded = jsonDecode(rawItems);
-  //       if (decoded is List) items = decoded;
-  //     } catch (_) {
-  //       items = [];
-  //     }
-  //   }
-
-  //   final id = order['id'];
-  //   final status = (order['order_status'] ?? 'placed').toString().toUpperCase();
-  //   final pickupTime = order['pickup_time_slot'] ?? 'ASAP';
-  //   final total = double.tryParse(order['total']?.toString() ?? '0') ?? 0.0;
-  //   final payment =
-  //       '${order['payment_method'] ?? 'Cash'} • ${order['payment_status'] ?? 'pending'}';
-
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.white,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-  //     ),
-  //     builder: (ctx) {
-  //       // Wrap tight around content so there is NO extra bottom white space
-  //       return SafeArea(
-  //         child: Padding(
-  //           padding: EdgeInsets.only(
-  //             left: 20,
-  //             right: 20,
-  //             top: 14,
-  //             bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-  //           ),
-  //           child: SingleChildScrollView(
-  //             child: Column(
-  //               mainAxisSize:
-  //                   MainAxisSize.min, // 👈 Removes the blank white space
-  //               crossAxisAlignment: CrossAxisAlignment.start,
-  //               children: [
-  //                 Center(
-  //                   child: Container(
-  //                     width: 44,
-  //                     height: 4,
-  //                     decoration: BoxDecoration(
-  //                       color: Colors.grey.shade300,
-  //                       borderRadius: BorderRadius.circular(2),
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 14),
-  //                 Row(
-  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                   children: [
-  //                     Text(
-  //                       '#AB-$id Details',
-  //                       style: const TextStyle(
-  //                         fontSize: 18,
-  //                         fontWeight: FontWeight.bold,
-  //                         color: AppColors.brandRed,
-  //                       ),
-  //                     ),
-  //                     Container(
-  //                       padding: const EdgeInsets.symmetric(
-  //                           horizontal: 10, vertical: 4),
-  //                       decoration: BoxDecoration(
-  //                         color: const Color(0xFFFDEEEC),
-  //                         borderRadius: BorderRadius.circular(8),
-  //                       ),
-  //                       child: Text(
-  //                         status,
-  //                         style: const TextStyle(
-  //                           fontSize: 11,
-  //                           fontWeight: FontWeight.bold,
-  //                           color: AppColors.brandRed,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 const SizedBox(height: 4),
-  //                 Text(
-  //                   'Pickup: $pickupTime | $payment',
-  //                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-  //                 ),
-  //                 const Divider(height: 20),
-  //                 const Text(
-  //                   'Ordered Items',
-  //                   style: TextStyle(
-  //                     fontSize: 15,
-  //                     fontWeight: FontWeight.bold,
-  //                     color: Colors.black87,
-  //                   ),
-  //                 ),
-  //                 const SizedBox(height: 10),
-  //                 if (items.isEmpty)
-  //                   Container(
-  //                     width: double.infinity,
-  //                     padding: const EdgeInsets.all(14),
-  //                     decoration: BoxDecoration(
-  //                       color: const Color(0xFFF9FAFB),
-  //                       borderRadius: BorderRadius.circular(12),
-  //                     ),
-  //                     child: Text(
-  //                       'No item breakdown available for this order.',
-  //                       style: TextStyle(
-  //                           color: Colors.grey.shade600, fontSize: 13),
-  //                     ),
-  //                   )
-  //                 else
-  //                   ...items.map((item) {
-  //                     final itemMap = Map<String, dynamic>.from(item);
-  //                     final name = itemMap['name'] ??
-  //                         itemMap['product_name'] ??
-  //                         'Selected Product';
-  //                     final qty = itemMap['quantity'] ?? 1;
-  //                     final price = double.tryParse(
-  //                             itemMap['price']?.toString() ?? '0') ??
-  //                         0.0;
-  //                     final size = itemMap['selected_size'] ?? itemMap['size'];
-  //                     final notes =
-  //                         itemMap['notes'] ?? itemMap['special_instructions'];
-
-  //                     List addOnsList = [];
-  //                     if (itemMap['selected_add_ons'] is List) {
-  //                       addOnsList = itemMap['selected_add_ons'];
-  //                     } else if (itemMap['selected_addons'] is List) {
-  //                       addOnsList = itemMap['selected_addons'];
-  //                     }
-
-  //                     return Container(
-  //                       margin: const EdgeInsets.only(bottom: 10),
-  //                       padding: const EdgeInsets.all(12),
-  //                       decoration: BoxDecoration(
-  //                         color: const Color(0xFFFBF8F5),
-  //                         borderRadius: BorderRadius.circular(14),
-  //                         border: Border.all(color: Colors.grey.shade200),
-  //                       ),
-  //                       child: Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Row(
-  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                             children: [
-  //                               Expanded(
-  //                                 child: Text(
-  //                                   '$qty×  $name',
-  //                                   style: const TextStyle(
-  //                                     fontWeight: FontWeight.bold,
-  //                                     fontSize: 14,
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                               Text(
-  //                                 '\$${(price * qty).toStringAsFixed(2)}',
-  //                                 style: const TextStyle(
-  //                                   fontWeight: FontWeight.bold,
-  //                                   color: AppColors.brandRed,
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                           if (size != null && size.toString().isNotEmpty) ...[
-  //                             const SizedBox(height: 4),
-  //                             Row(
-  //                               children: [
-  //                                 const Text('Size: ',
-  //                                     style: TextStyle(
-  //                                         fontSize: 12,
-  //                                         fontWeight: FontWeight.w600,
-  //                                         color: Colors.black87)),
-  //                                 Text('$size',
-  //                                     style: TextStyle(
-  //                                         fontSize: 12,
-  //                                         color: Colors.grey.shade700)),
-  //                               ],
-  //                             ),
-  //                           ],
-  //                           if (addOnsList.isNotEmpty) ...[
-  //                             const SizedBox(height: 3),
-  //                             Row(
-  //                               crossAxisAlignment: CrossAxisAlignment.start,
-  //                               children: [
-  //                                 const Text('Add-ons: ',
-  //                                     style: TextStyle(
-  //                                         fontSize: 12,
-  //                                         fontWeight: FontWeight.w600,
-  //                                         color: Colors.black87)),
-  //                                 Expanded(
-  //                                   child: Text(
-  //                                     addOnsList.join(', '),
-  //                                     style: TextStyle(
-  //                                         fontSize: 12,
-  //                                         color: Colors.grey.shade700),
-  //                                   ),
-  //                                 ),
-  //                               ],
-  //                             ),
-  //                           ],
-  //                           if (notes != null &&
-  //                               notes.toString().trim().isNotEmpty) ...[
-  //                             const SizedBox(height: 4),
-  //                             Text(
-  //                               'Note: "$notes"',
-  //                               style: const TextStyle(
-  //                                 fontSize: 11,
-  //                                 fontStyle: FontStyle.italic,
-  //                                 color: Colors.black54,
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ],
-  //                       ),
-  //                     );
-  //                   }),
-  //                 const Divider(height: 20),
-  //                 Row(
-  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                   children: [
-  //                     const Text(
-  //                       'Total Paid / Due',
-  //                       style: TextStyle(
-  //                           fontSize: 15, fontWeight: FontWeight.bold),
-  //                     ),
-  //                     Text(
-  //                       '\$${total.toStringAsFixed(2)}',
-  //                       style: const TextStyle(
-  //                         fontSize: 19,
-  //                         fontWeight: FontWeight.w900,
-  //                         color: AppColors.brandRed,
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
 
   void _showOrderDetailSheet(Map<String, dynamic> order) {
     List<dynamic> items = [];
@@ -496,13 +254,15 @@ class _OrderScreenState extends State<OrderScreen>
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: status == 'COMPLETED'
                               ? Colors.green.shade50
                               : (status == 'CANCELLED'
-                                  ? Colors.red.shade50
-                                  : const Color(0xFFFDEEEC)),
+                                    ? Colors.red.shade50
+                                    : const Color(0xFFFDEEEC)),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -513,8 +273,8 @@ class _OrderScreenState extends State<OrderScreen>
                             color: status == 'COMPLETED'
                                 ? Colors.green.shade700
                                 : (status == 'CANCELLED'
-                                    ? Colors.red.shade700
-                                    : AppColors.brandRed),
+                                      ? Colors.red.shade700
+                                      : AppColors.brandRed),
                           ),
                         ),
                       ),
@@ -527,14 +287,17 @@ class _OrderScreenState extends State<OrderScreen>
                       Text(
                         'Pickup: $pickupTime | $payment',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600),
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       Text(
                         'Token: $pickupCode',
                         style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
                       ),
                     ],
                   ),
@@ -561,18 +324,23 @@ class _OrderScreenState extends State<OrderScreen>
                       child: Text(
                         'No item breakdown available for this order.',
                         style: TextStyle(
-                            color: Colors.grey.shade600, fontSize: 13),
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                        ),
                       ),
                     )
                   else
                     ...items.map((item) {
                       final itemMap = Map<String, dynamic>.from(item);
-                      final name = itemMap['name'] ??
+                      final name =
+                          itemMap['name'] ??
                           itemMap['product_name'] ??
                           'Selected Product';
                       final qty = itemMap['quantity'] ?? 1;
-                      final price = double.tryParse(
-                              itemMap['price']?.toString() ?? '0') ??
+                      final price =
+                          double.tryParse(
+                            itemMap['price']?.toString() ?? '0',
+                          ) ??
                           0.0;
                       final size = itemMap['selected_size'] ?? itemMap['size'];
                       final notes =
@@ -621,15 +389,21 @@ class _OrderScreenState extends State<OrderScreen>
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Text('Size: ',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87)),
-                                  Text('$size',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700)),
+                                  const Text(
+                                    'Size: ',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  Text(
+                                    '$size',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -638,17 +412,21 @@ class _OrderScreenState extends State<OrderScreen>
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Add-ons: ',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.black87)),
+                                  const Text(
+                                    'Add-ons: ',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
                                   Expanded(
                                     child: Text(
                                       addOnsList.join(', '),
                                       style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700),
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -693,7 +471,9 @@ class _OrderScreenState extends State<OrderScreen>
                       const Text(
                         'Total Paid / Due',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '\$${total.toStringAsFixed(2)}',
@@ -771,8 +551,10 @@ class _OrderScreenState extends State<OrderScreen>
               indicatorSize: TabBarIndicatorSize.tab,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.grey.shade700,
-              labelStyle:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
               tabs: const [
                 Tab(text: 'Active Orders'),
                 Tab(text: 'Past Orders'),
@@ -782,13 +564,11 @@ class _OrderScreenState extends State<OrderScreen>
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.brandRed))
+                    child: CircularProgressIndicator(color: AppColors.brandRed),
+                  )
                 : TabBarView(
                     controller: _tabController,
-                    children: [
-                      _buildActiveOrdersTab(),
-                      _buildPastOrdersTab(),
-                    ],
+                    children: [_buildActiveOrdersTab(), _buildPastOrdersTab()],
                   ),
           ),
         ],
@@ -802,16 +582,21 @@ class _OrderScreenState extends State<OrderScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined,
-                size: 72, color: Colors.grey.shade400),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 72,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             const Text(
               'No Active Orders',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('No orders in preparation.',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            Text(
+              'No orders in preparation.',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
           ],
         ),
       );
@@ -841,7 +626,10 @@ class _OrderScreenState extends State<OrderScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-                color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -853,13 +641,16 @@ class _OrderScreenState extends State<OrderScreen>
                 Text(
                   '#AB-${order['id']}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: AppColors.brandRed),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    color: AppColors.brandRed,
+                  ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(10),
@@ -867,9 +658,10 @@ class _OrderScreenState extends State<OrderScreen>
                   child: Text(
                     'Pickup: $pickupTime',
                     style: const TextStyle(
-                        color: Colors.deepOrange,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11),
+                      color: Colors.deepOrange,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
               ],
@@ -891,29 +683,40 @@ class _OrderScreenState extends State<OrderScreen>
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Ready at Counter!',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF15803D),
-                                fontSize: 13)),
-                        Text('Show token to collect meal',
-                            style: TextStyle(
-                                color: Color(0xFF4B5563), fontSize: 11)),
+                        Text(
+                          'Ready at Counter!',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF15803D),
+                            fontSize: 13,
+                          ),
+                        ),
+                        Text(
+                          'Show token to collect meal',
+                          style: TextStyle(
+                            color: Color(0xFF4B5563),
+                            fontSize: 11,
+                          ),
+                        ),
                       ],
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                          color: const Color(0xFF15803D),
-                          borderRadius: BorderRadius.circular(8)),
+                        color: const Color(0xFF15803D),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Text(
                         pickupCode,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                            letterSpacing: 1.2),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ],
@@ -924,15 +727,16 @@ class _OrderScreenState extends State<OrderScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                    '${order['payment_method'] ?? 'ABA KHQR'} • ${order['payment_status'] ?? 'paid'}',
-                    style:
-                        TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                  '${order['payment_method'] ?? 'ABA KHQR'} • ${order['payment_status'] ?? 'paid'}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
                 Text(
                   '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
                   style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.brandRed),
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brandRed,
+                  ),
                 ),
               ],
             ),
@@ -974,8 +778,9 @@ class _OrderScreenState extends State<OrderScreen>
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color:
-                        isDone ? const Color(0xFF7A1C1C) : Colors.grey.shade300,
+                    color: isDone
+                        ? const Color(0xFF7A1C1C)
+                        : Colors.grey.shade300,
                     border: isCurrent
                         ? Border.all(color: Colors.amber, width: 2.5)
                         : null,
@@ -1027,8 +832,10 @@ class _OrderScreenState extends State<OrderScreen>
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text('Your completed and cancelled orders will show here.',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            Text(
+              'Your completed and cancelled orders will show here.',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            ),
           ],
         ),
       );
@@ -1051,7 +858,10 @@ class _OrderScreenState extends State<OrderScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: const [
                 BoxShadow(
-                    color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))
+                  color: Colors.black12,
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
               ],
             ),
             child: Column(
@@ -1060,12 +870,18 @@ class _OrderScreenState extends State<OrderScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('#AB-${order['id']}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(
+                      '#AB-${order['id']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: isCancelled
                             ? Colors.red.shade50
@@ -1087,11 +903,13 @@ class _OrderScreenState extends State<OrderScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                    '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.brandRed)),
+                  '\$${double.tryParse(order['total'].toString())?.toStringAsFixed(2) ?? '0.00'}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brandRed,
+                  ),
+                ),
               ],
             ),
           ),
