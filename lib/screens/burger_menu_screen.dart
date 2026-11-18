@@ -188,7 +188,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
           const StaffKitchenScreen(showAppBar: false),
         ],
       ),
-      
       floatingActionButton: _currentBottomNavIndex == 0
           ? FloatingActionButton(
               backgroundColor: burgundy,
@@ -350,7 +349,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
                   );
                 },
               ),
-              
             ],
           ),
         ],
@@ -369,7 +367,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               );
             },
           ),
-        
         PopupMenuButton<String>(
           tooltip: 'Account Menu',
           icon: const CircleAvatar(
@@ -973,7 +970,6 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
               ],
             ),
           ),
-          
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1027,59 +1023,86 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
     );
   }
 
-  Widget _buildBurgerImage(String path) {
-    String clean = path.trim();
+  // Widget _buildBurgerImage(String path) {
+  //   String clean = path.trim();
 
-    if (clean.startsWith('http://') || clean.startsWith('https://')) {
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        clean = clean
-            .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
-            .replaceAll('localhost:8000', '10.0.2.2:8000');
-      }
+  //   if (clean.startsWith('http://') || clean.startsWith('https://')) {
+  //     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+  //       clean = clean
+  //           .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
+  //           .replaceAll('localhost:8000', '10.0.2.2:8000');
+  //     }
 
-      final safeUrl = Uri.encodeFull(clean);
+  //     final safeUrl = Uri.encodeFull(clean);
 
-      return CachedNetworkImage(
-        imageUrl: safeUrl,
-        fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 200),
-        fadeOutDuration: const Duration(milliseconds: 100),
-        placeholder: (context, url) => Container(
-          color: const Color(0xFFFDEEEC),
-          child: const Center(
-            child: Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22),
-          ),
-        ),
-        errorWidget: (context, url, error) => Image.asset(
-          'assets/images/imagelist1.jpg',
-          fit: BoxFit.cover,
-        ),
-      );
-    }
+  //     return CachedNetworkImage(
+  //       imageUrl: safeUrl,
+  //       fit: BoxFit.cover,
+  //       fadeInDuration: const Duration(milliseconds: 200),
+  //       fadeOutDuration: const Duration(milliseconds: 100),
+  //       placeholder: (context, url) => Container(
+  //         color: const Color(0xFFFDEEEC),
+  //         child: const Center(
+  //           child: Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22),
+  //         ),
+  //       ),
+  //       errorWidget: (context, url, error) {
+  //         debugPrint('IMAGE LOAD FAILED: $url -> $error');
+  //         return Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover);
+  //       },
+  //     );
+  //   }
 
-    String assetPath = clean;
-    if (assetPath.startsWith('assets/assets/')) {
-      assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
-    } else if (!assetPath.startsWith('assets/')) {
-      assetPath = 'assets/$assetPath';
-    }
+  //   String assetPath = clean;
+  //   if (assetPath.startsWith('assets/assets/')) {
+  //     assetPath = assetPath.replaceFirst('assets/assets/', 'assets/');
+  //   } else if (!assetPath.startsWith('assets/')) {
+  //     assetPath = 'assets/$assetPath';
+  //   }
 
-    if (assetPath.contains('burger.png') ||
-        assetPath.contains('wings.png') ||
-        assetPath.isEmpty) {
-      assetPath = 'assets/images/imagelist1.jpg';
-    }
+  //   if (assetPath.contains('burger.png') ||
+  //       assetPath.contains('wings.png') ||
+  //       assetPath.isEmpty) {
+  //     assetPath = 'assets/images/imagelist1.jpg';
+  //   }
 
-    return Image.asset(
-      assetPath,
+  //   return Image.asset(
+  //     assetPath,
+  //     fit: BoxFit.cover,
+  //     errorBuilder: (_, __, ___) => Image.asset(
+  //       'assets/images/imagelist1.jpg',
+  //       fit: BoxFit.cover,
+  //     ),
+  //   );
+  // }
+
+Widget _buildBurgerImage(String path) {
+  final url = RestApi.resolveImage(path);
+  debugPrint('IMG path="$path" -> url="$url"');
+
+  if (url.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: url,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        'assets/images/imagelist1.jpg',
-        fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        color: const Color(0xFFFDEEEC),
+        child: const Center(
+            child: Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22)),
       ),
+      errorWidget: (_, u, e) {
+        debugPrint('IMAGE LOAD FAILED: $u -> $e');
+        return Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover);
+      },
     );
   }
 
+  return Image.asset(
+    url.startsWith('assets/') ? url : 'assets/$url',
+    fit: BoxFit.cover,
+    errorBuilder: (_, __, ___) =>
+        Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
+  );
+}
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _currentBottomNavIndex,

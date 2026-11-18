@@ -14,6 +14,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
   static const Color burgundy = Color(0xFF7A1C1C);
   List<dynamic> _staffList = [];
   bool _isLoading = true;
+  final Set<dynamic> _visiblePasswords = {}; // staff ids whose password is shown
 
   @override
   void initState() {
@@ -21,8 +22,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     _loadStaff();
   }
 
-  Future<void> _loadStaff() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadStaff({bool showSpinner = true}) async {
+    if (showSpinner) setState(() => _isLoading = true);
     final data = await RestApi.fetchStaffMembers();
     if (mounted) {
       setState(() {
@@ -293,17 +294,18 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 }
               }
 
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(result['message']),
-                    backgroundColor:
-                        result['success'] ? Colors.green : Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                _loadStaff();
-              }
+              if (!mounted) return;
+              // Use the SCREEN's context (this.context), not the closed dialog's.
+              final messenger = ScaffoldMessenger.of(this.context);
+              await _loadStaff(showSpinner: false);
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(result['message']),
+                  backgroundColor:
+                      result['success'] == true ? Colors.green : Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             },
             formContent: Form(
               key: formKey,
@@ -420,33 +422,40 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
               Navigator.pop(ctx);
               setState(() => _isLoading = true);
 
-              try {
-                await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                  email: emailCtrl.text.trim(),
-                  password: passwordCtrl.text.trim(),
-                );
-              } catch (e) {
-                debugPrint('Firebase registration note: $e');
-              }
+              final email = emailCtrl.text.trim();
+              final password = passwordCtrl.text.trim();
 
-              final result = await RestApi.createStaffUser(
+              // Run Firebase + Laravel at the same time (was one after another).
+              final firebaseFuture = FirebaseAuth.instance
+                  .createUserWithEmailAndPassword(
+                      email: email, password: password)
+                  .then<void>((_) {})
+                  .catchError((e) {
+                debugPrint('Firebase registration note: $e');
+              });
+
+              final apiFuture = RestApi.createStaffUser(
                 name: nameCtrl.text.trim(),
-                email: emailCtrl.text.trim(),
+                email: email,
                 phone: phoneCtrl.text.trim(),
-                password: passwordCtrl.text.trim(),
+                password: password,
               );
 
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(result['message']),
-                    backgroundColor:
-                        result['success'] == true ? Colors.green : Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-                _loadStaff();
-              }
+              final result = await apiFuture;
+              await firebaseFuture;
+
+              if (!mounted) return;
+              // Use the SCREEN's context (this.context), not the closed dialog's.
+              final messenger = ScaffoldMessenger.of(this.context);
+              await _loadStaff(showSpinner: false);
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(result['message']),
+                  backgroundColor:
+                      result['success'] == true ? Colors.green : Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
             },
             formContent: Form(
               key: formKey,
@@ -567,8 +576,50 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                             title: Text(staff['name'] ?? 'Staff',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold)),
-                            subtitle: Text(
-                                '${staff['email']}\n${staff['phone'] ?? "No phone"}'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    '${staff['email']}\n${staff['phone'] ?? "No phone"}'),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.lock_outline_rounded,
+                                        size: 14, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        _visiblePasswords.contains(staff['id'])
+                                            ? (staff['plain_password']
+                                                    ?.toString() ??
+                                                'Not available')
+                                            : '••••••••',
+                                        style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    InkWell(
+                                      onTap: () => setState(() {
+                                        if (!_visiblePasswords
+                                            .remove(staff['id'])) {
+                                          _visiblePasswords.add(staff['id']);
+                                        }
+                                      }),
+                                      child: Icon(
+                                        _visiblePasswords.contains(staff['id'])
+                                            ? Icons.visibility_off_outlined
+                                            : Icons.visibility_outlined,
+                                        size: 18,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                             isThreeLine: true,
                             trailing: Container(
                               padding: const EdgeInsets.symmetric(

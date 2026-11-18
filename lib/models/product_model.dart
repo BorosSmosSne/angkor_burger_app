@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../services/rest_api.dart';   // <-- add this
+// import 'package:angkor_burger_app/helpers/image_url.dart';
 
 class ProductModel {
   final int id;
@@ -82,41 +84,25 @@ class ProductModel {
     final pro = json['protein']?.toString() ?? '30g';
     final nutrition = '$cal kcal • $pro Protein';
 
-    // 4. Safe Cross-Platform Image URL Resolver
-    String rawImage = (json['image_url'] ??
+    final rawImage = (json['image_url'] ??
             json['imagePath'] ??
             json['image'] ??
             json['image_path'] ??
             '')
-        .toString()
-        .trim();
-
-    String finalImage;
-    if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
-      // Re-route localhost/127.0.0.1 to 10.0.2.2 ONLY on Android Emulators
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        rawImage = rawImage
-            .replaceAll('127.0.0.1:8000', '10.0.2.2:8000')
-            .replaceAll('localhost:8000', '10.0.2.2:8000')
-            .replaceAll('127.0.0.1', '10.0.2.2')
-            .replaceAll('localhost', '10.0.2.2');
-      }
-      finalImage = Uri.encodeFull(rawImage);
-    } else if (rawImage.startsWith('uploads/') ||
-        rawImage.startsWith('/uploads/')) {
-      final host = (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
-          ? '10.0.2.2:8000'
-          : '127.0.0.1:8000';
-      final cleanPath =
-          rawImage.startsWith('/') ? rawImage.substring(1) : rawImage;
-      finalImage = 'http://$host/$cleanPath';
-    } else if (rawImage.isNotEmpty &&
-        !rawImage.contains('assets/images/imagelist1.jpg')) {
-      finalImage =
-          rawImage.startsWith('assets/') ? rawImage : 'assets/$rawImage';
-    } else {
-      finalImage = 'assets/images/imagelist1.jpg';
-    }
+        .toString();
+    final resolved = RestApi.resolveImage(rawImage);
+    final finalImage = resolved.isEmpty
+        ? 'assets/images/imagelist1.jpg'
+        : (resolved.startsWith('http') || resolved.startsWith('assets/'))
+            ? resolved
+            : 'assets/$resolved';
+    // 4. Safe Cross-Platform Image URL Resolver (see helpers/image_url.dart)
+    // final String finalImage = resolveImageUrl(
+    //   json['image_url'] ??
+    //       json['imagePath'] ??
+    //       json['image'] ??
+    //       json['image_path'],
+    // );
 
     // 5. Parse Category
     String parsedCategory = 'All';

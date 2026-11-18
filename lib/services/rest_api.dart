@@ -5,6 +5,25 @@ import 'package:image_picker/image_picker.dart';
 import 'package:angkor_burger_app/models/product_model.dart';
 
 class RestApi {
+  static String get serverOrigin {
+  if (kIsWeb) return 'http://127.0.0.1:8000';
+  if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000';
+  return 'http://127.0.0.1:8000'; // iOS simulator / macOS
+}
+static String get baseUrl => '$serverOrigin/api';
+
+/// Turns "uploads/x.jpg" or "http://anything:8000/uploads/x.jpg" into a reachable URL.
+static String resolveImage(String raw) {
+  final r = raw.trim();
+  if (r.isEmpty) return '';
+  final i = r.indexOf('/uploads/');
+  if (r.startsWith('http') && i != -1) return Uri.encodeFull('$serverOrigin${r.substring(i)}');
+  if (r.startsWith('http')) return Uri.encodeFull(r);
+  if (r.startsWith('uploads/') || r.startsWith('/uploads/')) {
+    return Uri.encodeFull('$serverOrigin/${r.replaceFirst(RegExp(r'^/'), '')}');
+  }
+  return r; // local asset
+}
   static Map<String, String> get _headers => {
         'Accept': 'application/json',
       };
@@ -59,12 +78,14 @@ class RestApi {
     }
   }
 
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api';
-    }
-    return 'http://10.0.2.2:8000/api';
-  }
+  //   static String get baseUrl {
+  //   // Android emulator reaches the Mac through 10.0.2.2.
+  //   // Web, iOS simulator, and macOS use 127.0.0.1.
+  //   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+  //     return 'http://10.0.2.2:8000/api';
+  //   }
+  //   return 'http://127.0.0.1:8000/api';
+  // }
 
   static Future<List<dynamic>> fetchStaffMembers() async {
     try {
