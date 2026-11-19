@@ -1076,33 +1076,35 @@ class _BurgerMenuScreenState extends State<BurgerMenuScreen> {
   //   );
   // }
 
-Widget _buildBurgerImage(String path) {
-  final url = RestApi.resolveImage(path);
-  debugPrint('IMG path="$path" -> url="$url"');
+  Widget _buildBurgerImage(String path) {
+    final url = RestApi.resolveImage(path);
+    debugPrint('IMG path="$path" -> url="$url"');
 
-  if (url.startsWith('http')) {
-    return CachedNetworkImage(
-      imageUrl: url,
+    if (url.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(
+          color: const Color(0xFFFDEEEC),
+          child: const Center(
+              child:
+                  Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22)),
+        ),
+        errorWidget: (_, u, e) {
+          debugPrint('IMAGE LOAD FAILED: $u -> $e');
+          return Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover);
+        },
+      );
+    }
+
+    return Image.asset(
+      url.startsWith('assets/') ? url : 'assets/$url',
       fit: BoxFit.cover,
-      placeholder: (_, __) => Container(
-        color: const Color(0xFFFDEEEC),
-        child: const Center(
-            child: Icon(Icons.lunch_dining, color: Color(0xFF7A1C1C), size: 22)),
-      ),
-      errorWidget: (_, u, e) {
-        debugPrint('IMAGE LOAD FAILED: $u -> $e');
-        return Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover);
-      },
+      errorBuilder: (_, __, ___) =>
+          Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
     );
   }
 
-  return Image.asset(
-    url.startsWith('assets/') ? url : 'assets/$url',
-    fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) =>
-        Image.asset('assets/images/imagelist1.jpg', fit: BoxFit.cover),
-  );
-}
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _currentBottomNavIndex,

@@ -46,6 +46,8 @@ class _OrderScreenState extends State<OrderScreen>
   List<dynamic> _activeOrders = [];
   List<dynamic> _pastOrders = [];
   bool _isLoading = true;
+  bool _isFetching = false;
+  String? _errorMessage;
   Timer? _pollingTimer;
 
   @override
@@ -69,21 +71,37 @@ class _OrderScreenState extends State<OrderScreen>
   }
 
   Future<void> _fetchOrders({bool silent = false}) async {
-    if (!silent) setState(() => _isLoading = true);
+    // Don't stack requests (php artisan serve handles one request at a time)
+    if (_isFetching) return;
+    _isFetching = true;
+
+    if (!silent && mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
     try {
-      // ✅ Pass current user's email or user_id to isolate order history
-      final currentEmail = UserProfileManager.profileNotifier.value.email
-          .trim();
+      final currentEmail =
+          UserProfileManager.profileNotifier.value.email.trim();
       final currentUserId = RestApi.currentUserId;
 
-      final Uri uri = Uri.parse(
-        '${RestApi.baseUrl}/orders?user_id=$currentUserId&email=${Uri.encodeComponent(currentEmail)}',
-      );
+      final params = <String, String>{
+        if (currentUserId != null) 'user_id': currentUserId.toString(),
+        if (currentEmail.isNotEmpty) 'email': currentEmail,
+      };
+      final uri = Uri.parse('${RestApi.baseUrl}/orders')
+          .replace(queryParameters: params);
 
-      final response = await http.get(
-        uri,
-        headers: {'Accept': 'application/json'},
-      );
+      debugPrint('📦 GET $uri');
+
+      final response = await http
+          .get(uri, headers: {'Accept': 'application/json'})
+          .timeout(const Duration(seconds: 10));
+
+      debugPrint('📦 status=${response.statusCode}');
+      debugPrint('📦 body=${response.body}');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -93,9 +111,8 @@ class _OrderScreenState extends State<OrderScreen>
         final past = <dynamic>[];
 
         for (final item in all) {
-          final status = (item['order_status'] ?? 'placed')
-              .toString()
-              .toLowerCase();
+          final status =
+              (item['order_status'] ?? 'placed').toString().toLowerCase();
           if (status == 'completed' || status == 'cancelled') {
             past.add(item);
           } else {
@@ -108,13 +125,29 @@ class _OrderScreenState extends State<OrderScreen>
             _activeOrders = active;
             _pastOrders = past;
             _isLoading = false;
+            _errorMessage = null;
           });
         }
       } else {
-        if (mounted && !silent) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            if (!silent) {
+              _errorMessage = 'Server error (${response.statusCode})';
+            }
+          });
+        }
       }
-    } catch (_) {
-      if (mounted && !silent) setState(() => _isLoading = false);
+    } catch (e, st) {
+      debugPrint('📦 fetch orders ERROR: $e\n$st');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          if (!silent) _errorMessage = 'Could not load orders: $e';
+        });
+      }
+    } finally {
+      _isFetching = false;
     }
   }
 
@@ -577,6 +610,36 @@ class _OrderScreenState extends State<OrderScreen>
   }
 
   Widget _buildActiveOrdersTab() {
+    if (_errorMessage != null && _activeOrders.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off_outlined,
+                  size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => _fetchOrders(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.brandRed,
+                ),
+                child:
+                    const Text('Retry', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_activeOrders.isEmpty) {
       return Center(
         child: Column(
@@ -606,7 +669,9 @@ class _OrderScreenState extends State<OrderScreen>
       padding: const EdgeInsets.all(20),
       itemCount: _activeOrders.length,
       itemBuilder: (context, index) =>
-          _buildActiveOrderCard(_activeOrders[index]),
+          _buildActiveOrderCard(
+            Map<String, dynamic>.from(_activeOrders[index] as Map),
+          ),
     );
   }
 
@@ -845,11 +910,11 @@ class _OrderScreenState extends State<OrderScreen>
       padding: const EdgeInsets.all(20),
       itemCount: _pastOrders.length,
       itemBuilder: (context, index) {
-        final order = _pastOrders[index];
+        final order = Map<String, dynamic>.from(_pastOrders[index] as Map);
         final isCancelled = order['order_status'] == 'cancelled';
         return InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _showOrderDetailSheet(order), // 👈 Open on click
+          onTap: () => _showOrderDetailSheet(order),
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
